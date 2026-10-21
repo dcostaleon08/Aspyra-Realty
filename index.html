@@ -1,476 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aspyra Realty - Professional Lead CRM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aspyra Realty CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script>const _w=console.warn;console.warn=function(m){if(String(m).indexOf('cdn.tailwindcss.com')<0)_w.apply(console,arguments)}</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{color-scheme:dark}
+body{font-family:Manrope,sans-serif;background:#0b1015;color:#e6e9ee;background-image:radial-gradient(900px 400px at 85% -10%,rgba(201,162,75,.12),transparent),radial-gradient(700px 400px at -10% 30%,rgba(45,212,191,.07),transparent);background-attachment:fixed}
+.serif{font-family:Fraunces,serif}
+.glass{background:rgba(255,255,255,.04);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);border-radius:14px}
+.in{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.5rem .75rem;font-size:.875rem;outline:none}
+.in:focus{border-color:#c9a24b;box-shadow:0 0 0 2px rgba(201,162,75,.25)}
+.in option{background:#141a21}
+.btn{background:#c9a24b;color:#1a1405;font-weight:700;border-radius:10px;padding:.5rem 1rem;font-size:.875rem}
+.btn:hover{background:#d8b45f}
+.ghost{border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.5rem .9rem;font-size:.875rem}
+.ghost:hover{background:rgba(255,255,255,.07)}
+.lbl{font-size:.75rem;color:#8b95a3;margin-bottom:.25rem;display:block}
+.chip{font-size:.7rem;font-weight:600;padding:.15rem .55rem;border-radius:999px;white-space:nowrap;display:inline-block}
+.col.over{outline:2px dashed #c9a24b}
+.drawer{transform:translateX(100%);transition:transform .25s}.drawer.on{transform:none}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2a3340;border-radius:8px}
+button:focus-visible,a:focus-visible{outline:2px solid #c9a24b;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="min-h-screen">
 
-    <!-- LOGIN CONTAINER -->
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-slate-900 px-4">
-        <div class="max-w-md w-full bg-white rounded-xl shadow-2xl p-8 border border-gray-100">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-3">
-                    <i class="fa-solid fa-building-user text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900">Aspyra Realty</h2>
-                <p class="text-gray-500 text-sm mt-1">Lead Management Portal</p>
-            </div>
-            <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Select Role</label>
-                    <select id="roleSelect" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="MasterAdmin">Master Admin</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Agent">Agent</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Username</label>
-                    <input type="text" id="usernameInput" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Username">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Password</label>
-                    <input type="password" id="passwordInput" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
-                </div>
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition duration-150">Login to Dashboard</button>
-            </form>
-            <div class="mt-4 text-xs text-gray-400 text-center bg-gray-50 p-3 rounded-lg border">
-                <strong>Hint:</strong><br>
-                MasterAdmin / ArjunDcosta<br>
-                Admin / AspyraRealty<br>
-                Agent1 / Agent123
-            </div>
+<!-- LOGIN -->
+<div id="login" class="min-h-screen flex items-center justify-center p-4">
+  <form id="lf" class="glass w-full max-w-sm p-8 space-y-4" autocomplete="off">
+    <div class="text-center mb-2">
+      <div class="w-12 h-12 mx-auto rounded-xl bg-[#c9a24b] text-[#1a1405] flex items-center justify-center text-xl mb-3"><i class="fa-solid fa-building"></i></div>
+      <h1 class="serif text-3xl">Aspyra Realty</h1>
+      <p class="text-sm text-slate-400 mt-1">Sign in to your lead workspace</p>
+    </div>
+    <div><label class="lbl" for="u">Username</label><input id="u" class="in" required></div>
+    <div><label class="lbl" for="p">Password</label><input id="p" type="password" class="in" required></div>
+    <p id="le" class="text-sm text-rose-400 hidden">Username or password is incorrect. Check both and try again.</p>
+    <button class="btn w-full py-2.5">Sign in</button>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="sticky top-0 z-30 bg-[#0b1015]/80 backdrop-blur border-b border-white/10">
+    <div class="max-w-[1500px] mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-[#c9a24b] text-[#1a1405] flex items-center justify-center"><i class="fa-solid fa-building"></i></div>
+      <div class="serif text-xl leading-none">Aspyra Realty<div class="font-[Manrope] text-[11px] text-slate-400 font-medium mt-1" id="who"></div></div>
+      <div class="flex-1"></div>
+      <span id="mode" class="hidden text-xs text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1" title="Add your Firebase config to sync live">Local mode</span>
+      <div class="relative">
+        <button onclick="toggleBell()" class="ghost relative" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bb" class="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-[11px] font-bold flex items-center justify-center hidden">0</span></button>
+        <div id="bp" class="hidden absolute right-0 mt-2 w-80 max-w-[90vw] glass bg-[#141a21] p-2 max-h-96 overflow-auto shadow-2xl"></div>
+      </div>
+      <button onclick="logout()" class="ghost"><i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline ml-2">Sign out</span></button>
+    </div>
+  </header>
+
+  <main class="max-w-[1500px] mx-auto px-4 py-6 space-y-5">
+    <section id="kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></section>
+
+    <section class="glass p-4 space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div class="md:col-span-2 relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i><input id="fq" class="in pl-9" placeholder="Search name, phone, location, property type" oninput="S.f.q=this.value;render()"></div>
+        <select id="fs" class="in" onchange="S.f.status=this.value;render()"></select>
+        <select id="fa" class="in" onchange="S.f.agent=this.value;render()"></select>
+        <select id="ff" class="in" onchange="S.f.fu=this.value;render()">
+          <option value="">Any follow-up</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="week">Next 7 days</option><option value="none">No follow-up set</option>
+        </select>
+        <div class="flex gap-2"><input type="date" class="in" title="Follow-up from" onchange="S.f.from=this.value;render()"><input type="date" class="in" title="Follow-up to" onchange="S.f.to=this.value;render()"></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex rounded-lg border border-white/10 overflow-hidden text-sm">
+          <button id="vt" onclick="setView('table')" class="px-3 py-2"><i class="fa-solid fa-table-list mr-2"></i>Table</button>
+          <button id="vk" onclick="setView('board')" class="px-3 py-2"><i class="fa-solid fa-table-columns mr-2"></i>Board</button>
         </div>
-    </div>
+        <span id="cnt" class="text-sm text-slate-400"></span>
+        <div class="flex-1"></div>
+        <button id="bd" onclick="askDelete()" class="hidden px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-sm font-semibold"><i class="fa-solid fa-trash mr-2"></i><span></span></button>
+        <button id="add" onclick="openForm()" class="btn"><i class="fa-solid fa-plus mr-2"></i>Add lead</button>
+      </div>
+    </section>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="dashboard" class="hidden min-h-screen flex flex-col">
-        <!-- Top Navbar -->
-        <header class="bg-slate-900 text-white shadow-md">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-building text-blue-400 text-xl"></i>
-                    <span class="font-bold text-lg tracking-wide">Aspyra Realty CRM</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span id="userBadge" class="bg-blue-600/30 border border-blue-400/30 text-blue-300 text-xs px-3 py-1 rounded-full font-semibold"></span>
-                    <button onclick="logout()" class="text-gray-300 hover:text-white text-sm font-medium transition"><i class="fa-solid fa-right-from-bracket mr-1"></i> Logout</button>
-                </div>
-            </div>
-        </header>
+    <section id="list"></section>
+  </main>
+</div>
 
-        <!-- Main Content -->
-        <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 flex-1">
-            <!-- Controls Bar -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Lead Tracker & Pipeline</h1>
-                    <p class="text-gray-500 text-sm">Manage requirements, assigned agents, and follow-ups</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button id="bulkDeleteBtn" onclick="deleteSelectedLeads()" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">
-                        <i class="fa-solid fa-trash mr-1"></i> Delete Selected
-                    </button>
-                    <button onclick="openAddLeadModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Add New Lead
-                    </button>
-                </div>
-            </div>
+<!-- DRAWER -->
+<div id="dov" class="fixed inset-0 bg-black/60 z-40 hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer fixed top-0 right-0 h-full w-full max-w-lg z-50 bg-[#10161d] border-l border-white/10 overflow-y-auto"></aside>
 
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-3 items-center">
-                <div class="flex-1 min-w-[200px]">
-                    <input type="text" id="searchInput" onkeyup="filterLeads()" placeholder="Search Name, Phone, Property..." class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <select id="statusFilter" onchange="filterLeads()" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <option value="ALL">All Statuses</option>
-                    <option value="New">New</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Site Visit Scheduled">Site Visit Scheduled</option>
-                    <option value="Negotiation">Negotiation</option>
-                    <option value="Closed">Closed</option>
-                    <option value="Lost">Lost</option>
-                </select>
-                <select id="agentFilter" onchange="filterLeads()" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <option value="ALL">All Agents</option>
-                    <option value="Agent 1">Agent 1</option>
-                    <option value="Agent 2">Agent 2</option>
-                    <option value="Agent 3">Agent 3</option>
-                    <option value="Unassigned">Unassigned</option>
-                </select>
-            </div>
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-start sm:items-center justify-center p-4 overflow-y-auto"><div id="mb" class="glass bg-[#10161d] w-full max-w-xl p-6"></div></div>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden bg-[#1c2530] border border-white/10 rounded-xl px-4 py-3 text-sm shadow-2xl"></div>
 
-            <!-- Lead Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase text-gray-500 tracking-wider">
-                            <th id="selectAllTh" class="p-4 hidden w-10"><input type="checkbox" onclick="toggleSelectAll(this)" class="rounded"></th>
-                            <th class="p-4">Client Details</th>
-                            <th class="p-4">Requirement / Budget</th>
-                            <th class="p-4">Assigned Agent</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Next Follow-up</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leadTableBody" class="divide-y divide-gray-200 text-sm">
-                        <!-- Leads dynamically rendered -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
+<script>
+/* ================= FIREBASE CONFIG TEMPLATE =================
+   Paste your Firebase web-app config below. Until then the app runs in
+   Local mode (data saved in this browser only).
+   Realtime Database data lives at /leads                          */
+const FB_CFG={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId:"YOUR_PROJECT",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"000000000000",
+  appId:"YOUR_APP_ID"
+};
 
-    <!-- ADD / EDIT LEAD MODAL -->
-    <div id="leadModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 relative">
-            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4">Add New Real Estate Lead</h3>
-            <form onsubmit="event.preventDefault(); saveLead();" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Client Name *</label>
-                        <input type="text" id="mName" required class="w-full border rounded-lg p-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Phone Number *</label>
-                        <input type="tel" id="mPhone" required class="w-full border rounded-lg p-2 text-sm">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Property Type</label>
-                        <select id="mPropertyType" class="w-full border rounded-lg p-2 text-sm">
-                            <option value="Apartment/Flat">Apartment/Flat</option>
-                            <option value="Villa/House">Villa/House</option>
-                            <option value="Commercial">Commercial</option>
-                            <option value="Plot/Land">Plot/Land</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Budget</label>
-                        <input type="text" id="mBudget" placeholder="e.g. ₹75 Lakhs - ₹1 Cr" class="w-full border rounded-lg p-2 text-sm">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Preferred Location</label>
-                        <input type="text" id="mLocation" placeholder="e.g. Whitefield, Indiranagar" class="w-full border rounded-lg p-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Assign Agent</label>
-                        <select id="mAssignAgent" class="w-full border rounded-lg p-2 text-sm">
-                            <option value="Agent 1">Agent 1</option>
-                            <option value="Agent 2">Agent 2</option>
-                            <option value="Agent 3">Agent 3</option>
-                            <option value="Unassigned">Unassigned</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Lead Status</label>
-                        <select id="mStatus" class="w-full border rounded-lg p-2 text-sm">
-                            <option value="New">New</option>
-                            <option value="Contacted">Contacted</option>
-                            <option value="Site Visit Scheduled">Site Visit Scheduled</option>
-                            <option value="Negotiation">Negotiation</option>
-                            <option value="Closed">Closed</option>
-                            <option value="Lost">Lost</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Next Follow-up Date</label>
-                        <input type="date" id="mFollowupDate" class="w-full border rounded-lg p-2 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Notes / Requirement Summary</label>
-                    <textarea id="mNotes" rows="2" class="w-full border rounded-lg p-2 text-sm" placeholder="Add specific client requirements..."></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button type="button" onclick="closeLeadModal()" class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow">Save Lead</button>
-                </div>
-            </form>
-        </div>
-    </div>
+/* ================= DATA LAYER ================= */
+const USEFB=typeof firebase!=='undefined'&&!FB_CFG.apiKey.startsWith('YOUR_');
+const DB=USEFB?(()=>{
+  firebase.initializeApp(FB_CFG);const r=firebase.database().ref('leads');
+  return{sub:cb=>r.on('value',s=>cb(Object.values(s.val()||{}))),save:l=>r.child(l.id).set(l),del:ids=>{const u={};ids.forEach(i=>u[i]=null);return r.update(u)}};
+})():(()=>{
+  const K='aspyra_leads_v1';let cb=()=>{};
+  const load=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}};
+  const put=a=>{try{localStorage.setItem(K,JSON.stringify(a))}catch(e){}cb(a)};
+  window.addEventListener('storage',e=>{if(e.key===K)cb(load())});
+  return{sub:f=>{cb=f;f(load())},save:l=>{const a=load().filter(x=>x.id!==l.id);a.push(l);put(a)},del:ids=>put(load().filter(x=>!ids.includes(x.id)))};
+})();
 
-    <!-- TIMELINE / DETAILS MODAL -->
-    <div id="timelineModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 id="tLeadName" class="text-lg font-bold text-gray-900">Lead Details & Timeline</h3>
-                <button onclick="closeTimelineModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <div id="tDetails" class="bg-gray-50 p-3 rounded-lg text-xs space-y-1 mb-4 border"></div>
+/* ================= CONSTANTS & STATE ================= */
+const USERS={MasterAdmin:{p:'ArjunDcosta',role:'master',name:'Master Admin'},Admin:{p:'AspyraRealty',role:'admin',name:'Admin'},Agent1:{p:'Agent123',role:'agent',name:'Agent 1'}};
+const STATUSES=['New','Contacted','Site Visit Scheduled','Negotiation','Closed','Lost'];
+const SC={'New':'#60a5fa','Contacted':'#a78bfa','Site Visit Scheduled':'#fbbf24','Negotiation':'#fb923c','Closed':'#2dd4bf','Lost':'#f87171'};
+const AGENTS=['Agent 1','Agent 2','Agent 3'],TYPES=['Flat','Villa','Plot','Commercial'];
+const POSS=['Ready to move','Within 3 months','Within 6 months','Within 1 year','1 year or more'];
+const S={user:null,leads:[],view:'table',sel:new Set(),open:null,f:{q:'',status:'',agent:'',fu:'',from:'',to:''}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isMaster=()=>S.user.role==='master',isAgent=()=>S.user.role==='agent';
+const fmtL=n=>{n=+n||0;return n>=100?'₹'+(+(n/100).toFixed(2))+'Cr':'₹'+(+n.toFixed(1))+'L'};
+const budget=l=>fmtL(l.bMin)+' - '+fmtL(l.bMax);
+const fdt=s=>s?new Date(s).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+const dkey=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const phoneDigits=p=>{let d=String(p).replace(/\D/g,'');return d.length===10?'91'+d:d};
+const done=l=>l.status==='Closed'||l.status==='Lost';
+const tl=l=>l.timeline||[];
 
-            <div class="flex-1 overflow-y-auto mb-4">
-                <h4 class="text-xs font-bold uppercase text-gray-500 mb-2">Activity Log & Follow-up Notes</h4>
-                <div id="timelineLog" class="space-y-3"></div>
-            </div>
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hidden'),2600)}
+function log(l,text,kind){(l.timeline=tl(l)).push({t:new Date().toISOString(),by:S.user.name,text,kind:kind||'note'})}
+function save(l){l.updated=new Date().toISOString();return DB.save(l)}
 
-            <div class="border-t pt-3 space-y-2">
-                <input type="text" id="newTimelineNote" placeholder="Add follow-up remark..." class="w-full border rounded-lg p-2 text-sm">
-                <div class="flex justify-between items-center">
-                    <input type="date" id="newTimelineDate" class="border rounded-lg p-1.5 text-xs">
-                    <button onclick="addTimelineNote()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Add Activity</button>
-                </div>
-            </div>
-        </div>
-    </div>
+/* ================= AUTH ================= */
+$('lf').addEventListener('submit',e=>{
+  e.preventDefault();const u=USERS[$('u').value.trim()];
+  if(!u||u.p!==$('p').value){$('le').classList.remove('hidden');return}
+  S.user={...u,id:$('u').value.trim()};$('lf').reset();$('le').classList.add('hidden');
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');boot();
+});
+function logout(){S.user=null;S.sel.clear();closeDrawer();$('app').classList.add('hidden');$('login').classList.remove('hidden')}
 
-    <script>
-        let currentUserRole = '';
-        let activeLeadId = null;
-        let leads = [
-            {
-                id: 101,
-                name: "Rahul Sharma",
-                phone: "9876543210",
-                type: "Apartment/Flat",
-                budget: "₹80 Lakhs",
-                location: "Indiranagar",
-                agent: "Agent 1",
-                status: "Contacted",
-                followup: "2026-10-25",
-                notes: "Looking for 3BHK ready to move.",
-                timeline: [
-                    { date: "2026-10-21", note: "Initial call done. Requirements noted." }
-                ]
-            },
-            {
-                id: 102,
-                name: "Priya Patel",
-                phone: "9123456789",
-                type: "Villa/House",
-                budget: "₹2.5 Cr",
-                location: "Whitefield",
-                agent: "Agent 2",
-                status: "Site Visit Scheduled",
-                followup: "2026-10-23",
-                notes: "Interested in Gated Community Villas.",
-                timeline: [
-                    { date: "2026-10-20", note: "Site visit fixed for Saturday 11 AM." }
-                ]
-            }
-        ];
+let subscribed=false;
+function boot(){
+  $('who').textContent=S.user.name+' · '+({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role];
+  $('mode').classList.toggle('hidden',USEFB);
+  $('add').classList.toggle('hidden',isAgent());
+  $('fa').classList.toggle('hidden',isAgent());
+  $('fs').innerHTML='<option value="">All statuses</option>'+STATUSES.map(s=>`<option>${s}</option>`).join('');
+  $('fa').innerHTML='<option value="">All agents</option>'+AGENTS.concat('Unassigned').map(s=>`<option>${s}</option>`).join('');
+  S.f={q:'',status:'',agent:'',fu:'',from:'',to:''};$('fq').value='';$('fs').value='';$('fa').value='';$('ff').value='';
+  setView(S.view);
+  if(!subscribed){subscribed=true;DB.sub(a=>{S.leads=a.map(x=>({...x,timeline:x.timeline||[]}));if(S.user){render();if(S.open)drawer()}})}
+  else render();
+}
 
-        function handleLogin() {
-            const role = document.getElementById('roleSelect').value;
-            const username = document.getElementById('usernameInput').value.trim();
-            const password = document.getElementById('passwordInput').value.trim();
+/* ================= FILTERING ================= */
+function scoped(){return isAgent()?S.leads.filter(l=>l.agent===S.user.name):S.leads}
+function visible(){
+  const f=S.f,q=f.q.trim().toLowerCase(),now=new Date(),td=dkey(now),wk=new Date(now.getTime()+7*864e5);
+  return scoped().filter(l=>{
+    if(q&&![l.name,l.phone,l.location,l.type].join(' ').toLowerCase().includes(q))return false;
+    if(f.status&&l.status!==f.status)return false;
+    if(f.agent&&l.agent!==f.agent)return false;
+    if(f.from&&(!l.followUp||dkey(l.followUp)<f.from))return false;
+    if(f.to&&(!l.followUp||dkey(l.followUp)>f.to))return false;
+    if(f.fu){
+      if(f.fu==='none')return !l.followUp;
+      if(!l.followUp||done(l))return false;
+      const d=new Date(l.followUp);
+      if(f.fu==='overdue')return d<now;
+      if(f.fu==='today')return dkey(d)===td;
+      if(f.fu==='week')return d>=now&&d<=wk;
+    }
+    return true;
+  }).sort((a,b)=>(b.updated||'').localeCompare(a.updated||''));
+}
 
-            // Flexible validation check
-            let isValid = false;
-            if (role === 'MasterAdmin' && username === 'MasterAdmin' && password === 'ArjunDcosta') {
-                isValid = true;
-            } else if (role === 'Admin' && username === 'Admin' && password === 'AspyraRealty') {
-                isValid = true;
-            } else if (role === 'Agent' && username === 'Agent1' && password === 'Agent123') {
-                isValid = true;
-            }
+/* ================= RENDER ================= */
+function render(){kpis();list();bell();bulkBar()}
+function setView(v){S.view=v;[['vt','table'],['vk','board']].forEach(([id,k])=>{$(id).className='px-3 py-2 '+(v===k?'bg-[#c9a24b] text-[#1a1405] font-bold':'text-slate-300 hover:bg-white/5')});if(S.user)list()}
 
-            if (isValid) {
-                currentUserRole = role;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-                document.getElementById('userBadge').innerText = role;
+function kpis(){
+  const L=scoped(),now=new Date(),td=dkey(now);
+  const due=L.filter(l=>l.followUp&&!done(l)&&dkey(l.followUp)===td).length;
+  const over=L.filter(l=>l.followUp&&!done(l)&&new Date(l.followUp)<now&&dkey(l.followUp)!==td).length;
+  const sv=L.filter(l=>l.status==='Site Visit Scheduled').length;
+  const mid=l=>((+l.bMin||0)+(+l.bMax||0))/2;
+  const won=L.filter(l=>l.status==='Closed'),neg=L.filter(l=>l.status==='Negotiation');
+  const card=(ic,c,lab,val,sub)=>`<div class="glass p-4"><div class="flex items-center justify-between"><span class="text-sm text-slate-400">${lab}</span><span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:${c}22;color:${c}"><i class="fa-solid ${ic}"></i></span></div><div class="serif text-3xl mt-2">${val}</div><div class="text-xs text-slate-400 mt-1">${sub}</div></div>`;
+  const tot=L.length||1;
+  const bar=STATUSES.map(s=>{const n=L.filter(l=>l.status===s).length;return n?`<div title="${s}: ${n}" style="width:${n/tot*100}%;background:${SC[s]}"></div>`:''}).join('');
+  $('kpis').innerHTML=
+    card('fa-users','#60a5fa','Total leads',L.length,`<div class="flex h-1.5 rounded-full overflow-hidden bg-white/10 mt-1">${bar}</div>`)+
+    card('fa-bell','#fb923c','Follow-ups due today',due,over?`<span class="text-rose-400">${over} overdue</span>`:'Nothing overdue')+
+    card('fa-location-dot','#fbbf24','Site visits scheduled',sv,'Leads awaiting a visit')+
+    card('fa-handshake','#2dd4bf','Deals closed',`${won.length} <span class="text-lg text-slate-400">· ${fmtL(won.reduce((a,l)=>a+mid(l),0))}</span>`,`Pipeline in negotiation: ${fmtL(neg.reduce((a,l)=>a+mid(l),0))}`);
+}
 
-                if (role === 'MasterAdmin') {
-                    document.getElementById('selectAllTh').classList.remove('hidden');
-                    document.getElementById('bulkDeleteBtn').classList.remove('hidden');
-                }
+function fuBadge(l){
+  if(!l.followUp)return '<span class="chip bg-white/5 text-slate-400">No follow-up</span>';
+  if(done(l))return `<span class="chip bg-white/5 text-slate-400">${fdt(l.followUp)}</span>`;
+  const d=new Date(l.followUp),now=new Date();
+  if(d<now)return `<span class="chip bg-rose-500/15 text-rose-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Overdue ${fdt(l.followUp)}</span>`;
+  if(dkey(d)===dkey(now))return `<span class="chip bg-amber-400/15 text-amber-300"><i class="fa-regular fa-clock mr-1"></i>Today ${d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</span>`;
+  return `<span class="chip bg-sky-400/15 text-sky-300"><i class="fa-regular fa-calendar mr-1"></i>${fdt(l.followUp)}</span>`;
+}
+const stChip=s=>`<span class="chip" style="background:${SC[s]}22;color:${SC[s]}">${s}</span>`;
+const contact=l=>`<span class="inline-flex items-center gap-2"><span>${esc(l.phone)}</span><a href="https://wa.me/${phoneDigits(l.phone)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a><a href="tel:+${phoneDigits(l.phone)}" onclick="event.stopPropagation()" class="text-sky-400 hover:text-sky-300" title="Call"><i class="fa-solid fa-phone"></i></a></span>`;
+const agentSel=l=>`<select class="in !py-1 !text-xs !w-auto" ${isAgent()?'disabled':''} onclick="event.stopPropagation()" onchange="transfer('${l.id}',this.value)">${['Unassigned'].concat(AGENTS).map(a=>`<option ${a===l.agent?'selected':''}>${a}</option>`).join('')}</select>`;
 
-                renderLeads();
-            } else {
-                alert('Invalid Credentials! Please check username and password.');
-            }
-        }
+function list(){
+  const L=visible();$('cnt').textContent=L.length+' of '+scoped().length+' leads';
+  if(!L.length){$('list').innerHTML=`<div class="glass p-12 text-center text-slate-400"><i class="fa-regular fa-folder-open text-4xl mb-3"></i><p class="text-lg text-slate-200">${scoped().length?'No leads match these filters':'No leads yet'}</p><p class="text-sm mt-1">${scoped().length?'Clear a filter or change your search.':isAgent()?'Leads assigned to you will appear here.':'Add your first lead to start tracking.'}</p></div>`;return}
+  if(S.view==='board'){
+    $('list').innerHTML=`<div class="flex gap-3 overflow-x-auto pb-3">`+STATUSES.map(s=>{
+      const c=L.filter(l=>l.status===s);
+      return `<div class="col glass min-w-[285px] w-[285px] shrink-0 p-3" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="this.classList.remove('over');dropTo('${s}',event)">
+      <div class="flex items-center justify-between mb-3"><span class="font-semibold text-sm" style="color:${SC[s]}">${s}</span><span class="chip bg-white/10">${c.length}</span></div>
+      <div class="space-y-3">${c.map(card).join('')||'<p class="text-xs text-slate-500 text-center py-4">Drop a lead here</p>'}</div></div>`}).join('')+`</div>`;
+    return;
+  }
+  const all=L.length&&L.every(l=>S.sel.has(l.id));
+  $('list').innerHTML=`<div class="glass overflow-x-auto"><table class="w-full text-sm min-w-[1000px]"><thead class="text-left text-xs text-slate-400 border-b border-white/10"><tr>
+    ${isMaster()?`<th class="p-3 w-10"><input type="checkbox" ${all?'checked':''} onchange="selAll(this.checked)" aria-label="Select all"></th>`:''}
+    <th class="p-3">Client</th><th class="p-3">Phone</th><th class="p-3">Budget</th><th class="p-3">Location</th><th class="p-3">Type</th><th class="p-3">Agent</th><th class="p-3">Status</th><th class="p-3">Next follow-up</th><th class="p-3"></th></tr></thead><tbody>`+
+    L.map(l=>`<tr class="border-b border-white/5 hover:bg-white/[.03] cursor-pointer" onclick="openLead('${l.id}')">
+      ${isMaster()?`<td class="p-3" onclick="event.stopPropagation()"><input type="checkbox" ${S.sel.has(l.id)?'checked':''} onchange="sel('${l.id}',this.checked)"></td>`:''}
+      <td class="p-3 font-semibold">${esc(l.name)}</td><td class="p-3">${contact(l)}</td><td class="p-3 whitespace-nowrap">${budget(l)}</td>
+      <td class="p-3">${esc(l.location)}</td><td class="p-3">${esc(l.type)}</td><td class="p-3">${agentSel(l)}</td><td class="p-3">${stChip(l.status)}</td><td class="p-3">${fuBadge(l)}</td>
+      <td class="p-3 text-right whitespace-nowrap"><button class="ghost !px-2 !py-1" onclick="event.stopPropagation();openForm('${l.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button></td></tr>`).join('')+`</tbody></table></div>`;
+}
+function card(l){
+  return `<div draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${l.id}')" onclick="openLead('${l.id}')" class="rounded-xl bg-[#141a21] border border-white/10 p-3 cursor-pointer hover:border-[#c9a24b]/60 space-y-2">
+    <div class="flex items-start justify-between gap-2"><div class="font-semibold">${esc(l.name)}</div>${isMaster()?`<input type="checkbox" ${S.sel.has(l.id)?'checked':''} onclick="event.stopPropagation()" onchange="sel('${l.id}',this.checked)" aria-label="Select lead">`:''}</div>
+    <div class="text-sm">${contact(l)}</div>
+    <div class="text-sm text-[#c9a24b] font-semibold">${budget(l)}</div>
+    <div class="text-xs text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>${esc(l.location)} · ${esc(l.type)}</div>
+    <div class="flex items-center justify-between gap-2 flex-wrap">${agentSel(l)}${fuBadge(l)}</div></div>`;
+}
 
-        function renderLeads(filteredLeads = null) {
-            const list = filteredLeads || leads;
-            const tbody = document.getElementById('leadTableBody');
-            tbody.innerHTML = '';
+/* ================= ACTIONS ================= */
+function transfer(id,to){
+  const l=S.leads.find(x=>x.id===id);if(!l||l.agent===to)return;
+  const from=l.agent;l.agent=to;log(l,`Transferred from ${from} to ${to} by ${S.user.name}`,'transfer');save(l);toast('Lead transferred to '+to);
+}
+function dropTo(status,e){
+  const id=e.dataTransfer.getData('text/plain'),l=S.leads.find(x=>x.id===id);
+  if(l&&l.status!==status)setStatus(l,status);
+}
+function setStatus(l,status){
+  const old=l.status;l.status=status;if(done(l))l.followUp='';
+  log(l,`Status changed from ${old} to ${status}`,'status');save(l);toast('Status updated to '+status);
+}
+function sel(id,on){on?S.sel.add(id):S.sel.delete(id);bulkBar();if(S.view==='table')list()}
+function selAll(on){visible().forEach(l=>on?S.sel.add(l.id):S.sel.delete(l.id));list();bulkBar()}
+function bulkBar(){const b=$('bd'),show=isMaster()&&S.sel.size>0;b.classList.toggle('hidden',!show);if(show)b.querySelector('span').textContent='Delete '+S.sel.size+' selected'}
+function askDelete(){
+  if(!isMaster()||!S.sel.size)return;
+  showModal(`<h3 class="serif text-2xl mb-2">Delete ${S.sel.size} lead${S.sel.size>1?'s':''}?</h3><p class="text-sm text-slate-400 mb-5">This permanently removes the selected leads and their timelines. You can't undo this.</p>
+  <div class="flex justify-end gap-2"><button class="ghost" onclick="hideModal()">Keep leads</button><button class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-sm font-semibold" onclick="doDelete()">Delete permanently</button></div>`);
+}
+function doDelete(){
+  if(!isMaster())return;const ids=[...S.sel],n=ids.length;S.sel.clear();
+  if(S.open&&ids.includes(S.open))closeDrawer();
+  Promise.resolve(DB.del(ids)).then(()=>toast(n+' lead'+(n>1?'s':'')+' deleted')).catch(()=>toast('Delete failed. Check your database rules.'));hideModal();
+}
+function showModal(h){$('mb').innerHTML=h;$('modal').classList.remove('hidden')}
+function hideModal(){$('modal').classList.add('hidden')}
 
-            if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">No leads found.</td></tr>`;
-                return;
-            }
+/* ---- Add / Edit form ---- */
+function openForm(id){
+  const l=id?S.leads.find(x=>x.id===id):null;if(!id&&isAgent())return;
+  const v=l||{name:'',phone:'',bMin:'',bMax:'',location:'',type:'Flat',poss:POSS[0],status:'New',agent:'Unassigned',followUp:''};
+  const opt=(arr,cur)=>arr.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  showModal(`<form id="lead-form" class="space-y-4"><div class="flex items-center justify-between"><h3 class="serif text-2xl">${l?'Edit lead':'Add lead'}</h3><button type="button" class="text-slate-400 hover:text-white" onclick="hideModal()" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div><label class="lbl">Client name</label><input name="name" class="in" required value="${esc(v.name)}"></div>
+  <div><label class="lbl">Phone</label><input name="phone" class="in" required inputmode="tel" value="${esc(v.phone)}"></div>
+  <div><label class="lbl">Budget minimum (₹ Lakhs)</label><input name="bMin" type="number" min="0" step="any" class="in" required value="${esc(v.bMin)}" placeholder="75"></div>
+  <div><label class="lbl">Budget maximum (₹ Lakhs)</label><input name="bMax" type="number" min="0" step="any" class="in" required value="${esc(v.bMax)}" placeholder="150"></div>
+  <div><label class="lbl">Location</label><input name="location" class="in" required value="${esc(v.location)}"></div>
+  <div><label class="lbl">Property type</label><select name="type" class="in">${opt(TYPES,v.type)}</select></div>
+  <div><label class="lbl">Preferred possession</label><select name="poss" class="in">${opt(POSS,v.poss)}</select></div>
+  <div><label class="lbl">Status</label><select name="status" class="in">${opt(STATUSES,v.status)}</select></div>
+  <div><label class="lbl">Assigned agent</label><select name="agent" class="in" ${isAgent()?'disabled':''}>${opt(['Unassigned'].concat(AGENTS),v.agent)}</select></div>
+  <div><label class="lbl">Next follow-up</label><input name="followUp" type="datetime-local" class="in" value="${esc(v.followUp)}"></div></div>
+  <p id="fe" class="text-sm text-rose-400 hidden"></p>
+  <div class="flex justify-end gap-2"><button type="button" class="ghost" onclick="hideModal()">Cancel</button><button class="btn">${l?'Save changes':'Add lead'}</button></div></form>`);
+  $('lead-form').onsubmit=e=>{e.preventDefault();submitForm(id)};
+}
+function submitForm(id){
+  const fd=new FormData($('lead-form')),g=k=>(fd.get(k)||'').toString().trim(),err=m=>{$('fe').textContent=m;$('fe').classList.remove('hidden')};
+  if(g('phone').replace(/\D/g,'').length<10)return err('Enter a phone number with at least 10 digits.');
+  const bMin=+g('bMin'),bMax=+g('bMax');if(bMax<bMin)return err('Maximum budget must be at least the minimum budget.');
+  let l=id?S.leads.find(x=>x.id===id):null;const isNew=!l;
+  const old=l?{status:l.status,agent:l.agent}:{};
+  if(isNew)l={id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),created:new Date().toISOString(),timeline:[],siteVisit:''};
+  Object.assign(l,{name:g('name'),phone:g('phone'),bMin,bMax,location:g('location'),type:g('type'),poss:g('poss'),status:g('status'),followUp:g('followUp')});
+  if(!isAgent())l.agent=g('agent');else if(isNew)l.agent=S.user.name;
+  if(done(l))l.followUp='';
+  if(isNew){log(l,`Lead created by ${S.user.name}`,'system');if(l.agent!=='Unassigned')log(l,`Assigned to ${l.agent}`,'transfer');if(l.followUp)log(l,`Follow-up set for ${fdt(l.followUp)}`,'note')}
+  else{
+    if(old.agent!==l.agent)log(l,`Transferred from ${old.agent} to ${l.agent} by ${S.user.name}`,'transfer');
+    if(old.status!==l.status)log(l,`Status changed from ${old.status} to ${l.status}`,'status');
+    log(l,'Lead details updated','system');
+  }
+  save(l);hideModal();toast(isNew?'Lead added':'Changes saved');
+}
 
-            list.forEach(lead => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50/80 transition";
+/* ---- Drawer / timeline ---- */
+function openLead(id){S.open=id;drawer();$('dov').classList.remove('hidden');requestAnimationFrame(()=>$('drawer').classList.add('on'))}
+function closeDrawer(){S.open=null;$('drawer').classList.remove('on');$('dov').classList.add('hidden')}
+const ICON={call:['fa-phone','#60a5fa'],visit:['fa-location-dot','#fbbf24'],transfer:['fa-right-left','#a78bfa'],status:['fa-flag','#2dd4bf'],note:['fa-comment','#c9a24b'],system:['fa-circle-plus','#8b95a3']};
+function drawer(){
+  const l=S.leads.find(x=>x.id===S.open);if(!l){closeDrawer();return}
+  const keep=$('fu-note')?$('fu-note').value:'';
+  const row=(k,v)=>`<div><div class="text-xs text-slate-500">${k}</div><div class="text-sm">${v}</div></div>`;
+  $('drawer').innerHTML=`<div class="p-5 space-y-5">
+  <div class="flex items-start justify-between gap-3"><div><h2 class="serif text-2xl">${esc(l.name)}</h2><div class="text-sm mt-1">${contact(l)}</div></div>
+    <div class="flex gap-2"><button class="ghost" onclick="openForm('${l.id}')" title="Edit lead"><i class="fa-solid fa-pen"></i></button><button class="ghost" onclick="closeDrawer()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div></div>
+  <div class="glass p-4 grid grid-cols-2 gap-4">
+    ${row('Budget',budget(l))}${row('Location',esc(l.location))}${row('Property type',esc(l.type))}${row('Possession',esc(l.poss||'—'))}
+    ${row('Agent',agentSel(l))}${row('Next follow-up',fuBadge(l))}${l.siteVisit?row('Site visit',fdt(l.siteVisit)):''}</div>
+  <div><label class="lbl">Lead status</label><select class="in" onchange="setStatus(S.leads.find(x=>x.id==='${l.id}'),this.value)">${STATUSES.map(s=>`<option ${s===l.status?'selected':''}>${s}</option>`).join('')}</select></div>
+  <form id="fu-form" class="glass p-4 space-y-3"><div class="font-semibold text-sm">Add follow-up or remark</div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Type</label><select id="fu-type" class="in"><option value="note">Remark</option><option value="call">Call made</option>${isAgent()?'':'<option value="visit">Site visit booked</option>'}</select></div>
+    <div><label class="lbl">Date and time</label><input id="fu-dt" type="datetime-local" class="in"></div></div>
+    <textarea id="fu-note" rows="2" class="in" placeholder="What happened or what comes next?" required>${esc(keep)}</textarea>
+    <button class="btn w-full">Add to timeline</button></form>
+  <div><div class="font-semibold text-sm mb-3">Activity timeline</div><div class="relative pl-6 space-y-4 before:absolute before:left-[9px] before:top-1 before:bottom-1 before:w-px before:bg-white/10">
+  ${tl(l).slice().reverse().map(e=>{const [ic,c]=ICON[e.kind]||ICON.note;return `<div class="relative"><span class="absolute -left-6 top-0.5 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[10px]" style="background:${c}33;color:${c}"><i class="fa-solid ${ic}"></i></span><div class="text-sm">${esc(e.text)}</div><div class="text-xs text-slate-500 mt-0.5">${fdt(e.t)} · ${esc(e.by)}</div></div>`}).join('')}</div></div></div>`;
+  $('fu-form').onsubmit=ev=>{ev.preventDefault();addEntry(l.id)};
+}
+function addEntry(id){
+  const l=S.leads.find(x=>x.id===id),type=$('fu-type').value,dt=$('fu-dt').value,note=$('fu-note').value.trim();if(!l||!note)return;
+  if(type==='visit'&&isAgent())return;
+  if(type==='visit'){
+    if(!dt){toast('Pick the site visit date and time');return}
+    l.siteVisit=dt;l.followUp=dt;if(!done(l)&&l.status!=='Site Visit Scheduled'){log(l,`Status changed from ${l.status} to Site Visit Scheduled`,'status');l.status='Site Visit Scheduled'}
+    log(l,`Site visit booked for ${fdt(dt)}: ${note}`,'visit');
+  }else{
+    log(l,(type==='call'?'Call made: ':'Remark: ')+note+(dt?` (next follow-up ${fdt(dt)})`:''),type);
+    if(dt&&!done(l))l.followUp=dt;
+  }
+  $('fu-note').value='';save(l);toast('Added to timeline');
+}
 
-                let checkTd = currentUserRole === 'MasterAdmin' 
-                    ? `<td class="p-4"><input type="checkbox" class="lead-checkbox rounded" value="${lead.id}"></td>` 
-                    : '';
-
-                tr.innerHTML = `
-                    ${checkTd}
-                    <td class="p-4">
-                        <div class="font-bold text-gray-900">${lead.name}</div>
-                        <div class="text-xs text-gray-500"><i class="fa-solid fa-phone text-blue-500 mr-1"></i>${lead.phone}</div>
-                    </td>
-                    <td class="p-4">
-                        <div class="font-medium text-gray-800">${lead.type}</div>
-                        <div class="text-xs text-gray-500">${lead.budget} • ${lead.location}</div>
-                    </td>
-                    <td class="p-4">
-                        <select onchange="transferAgent(${lead.id}, this.value)" class="text-xs font-semibold border rounded-lg p-1.5 bg-gray-50 focus:ring-1 focus:ring-blue-500">
-                            <option value="Agent 1" ${lead.agent === 'Agent 1' ? 'selected' : ''}>Agent 1</option>
-                            <option value="Agent 2" ${lead.agent === 'Agent 2' ? 'selected' : ''}>Agent 2</option>
-                            <option value="Agent 3" ${lead.agent === 'Agent 3' ? 'selected' : ''}>Agent 3</option>
-                            <option value="Unassigned" ${lead.agent === 'Unassigned' ? 'selected' : ''}>Unassigned</option>
-                        </select>
-                    </td>
-                    <td class="p-4">
-                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">${lead.status}</span>
-                    </td>
-                    <td class="p-4 text-xs font-medium text-gray-600">
-                        ${lead.followup ? `<i class="fa-regular fa-calendar mr-1 text-gray-400"></i>${lead.followup}` : 'N/A'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <div class="flex justify-center items-center gap-2">
-                            <a href="https://wa.me/91${lead.phone}" target="_blank" class="w-8 h-8 rounded-full bg-green-100 hover:bg-green-200 text-green-700 flex items-center justify-center transition" title="WhatsApp Chat">
-                                <i class="fa-brands fa-whatsapp text-sm"></i>
-                            </a>
-                            <button onclick="openTimeline(${lead.id})" class="w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center justify-center transition" title="Timeline & Followups">
-                                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filterLeads() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            const agent = document.getElementById('agentFilter').value;
-
-            const filtered = leads.filter(l => {
-                const matchSearch = l.name.toLowerCase().includes(search) || l.phone.includes(search) || l.type.toLowerCase().includes(search);
-                const matchStatus = status === 'ALL' || l.status === status;
-                const matchAgent = agent === 'ALL' || l.agent === agent;
-                return matchSearch && matchStatus && matchAgent;
-            });
-
-            renderLeads(filtered);
-        }
-
-        function transferAgent(id, newAgent) {
-            const lead = leads.find(l => l.id === id);
-            if(lead) {
-                lead.agent = newAgent;
-                lead.timeline.push({ date: new Date().toISOString().split('T')[0], note: `Assigned to ${newAgent}` });
-                alert(`Lead transferred to ${newAgent}`);
-            }
-        }
-
-        function openAddLeadModal() {
-            document.getElementById('leadModal').classList.remove('hidden');
-        }
-
-        function closeLeadModal() {
-            document.getElementById('leadModal').classList.add('hidden');
-        }
-
-        function saveLead() {
-            const newLead = {
-                id: Date.now(),
-                name: document.getElementById('mName').value,
-                phone: document.getElementById('mPhone').value,
-                type: document.getElementById('mPropertyType').value,
-                budget: document.getElementById('mBudget').value || 'N/A',
-                location: document.getElementById('mLocation').value || 'N/A',
-                agent: document.getElementById('mAssignAgent').value,
-                status: document.getElementById('mStatus').value,
-                followup: document.getElementById('mFollowupDate').value,
-                notes: document.getElementById('mNotes').value,
-                timeline: [
-                    { date: new Date().toISOString().split('T')[0], note: "Lead created in system." }
-                ]
-            };
-
-            leads.unshift(newLead);
-            renderLeads();
-            closeLeadModal();
-        }
-
-        function openTimeline(id) {
-            activeLeadId = id;
-            const lead = leads.find(l => l.id === id);
-            if(!lead) return;
-
-            document.getElementById('tLeadName').innerText = `${lead.name} (${lead.phone})`;
-            document.getElementById('tDetails').innerHTML = `
-                <div><strong>Property:</strong> ${lead.type} | <strong>Budget:</strong> ${lead.budget}</div>
-                <div><strong>Location:</strong> ${lead.location} | <strong>Notes:</strong> ${lead.notes || 'None'}</div>
-            `;
-
-            renderTimelineLogs(lead);
-            document.getElementById('timelineModal').classList.remove('hidden');
-        }
-
-        function renderTimelineLogs(lead) {
-            const container = document.getElementById('timelineLog');
-            container.innerHTML = '';
-            lead.timeline.forEach(t => {
-                container.innerHTML += `
-                    <div class="border-l-2 border-blue-500 pl-3 py-1">
-                        <div class="text-[10px] font-bold text-gray-400">${t.date}</div>
-                        <div class="text-xs text-gray-700">${t.note}</div>
-                    </div>
-                `;
-            });
-        }
-
-        function addTimelineNote() {
-            const note = document.getElementById('newTimelineNote').value;
-            const date = document.getElementById('newTimelineDate').value || new Date().toISOString().split('T')[0];
-            if(!note) return;
-
-            const lead = leads.find(l => l.id === activeLeadId);
-            if(lead) {
-                lead.timeline.push({ date, note });
-                renderTimelineLogs(lead);
-                document.getElementById('newTimelineNote').value = '';
-            }
-        }
-
-        function closeTimelineModal() {
-            document.getElementById('timelineModal').classList.add('hidden');
-        }
-
-        function toggleSelectAll(master) {
-            document.querySelectorAll('.lead-checkbox').forEach(cb => cb.checked = master.checked);
-        }
-
-        function deleteSelectedLeads() {
-            const selected = Array.from(document.querySelectorAll('.lead-checkbox:checked')).map(cb => Number(cb.value));
-            if(selected.length === 0) {
-                alert('Please select at least 1 lead to delete.');
-                return;
-            }
-            if(confirm('Are you sure you want to delete selected leads?')) {
-                leads = leads.filter(l => !selected.includes(l.id));
-                renderLeads();
-            }
-        }
-
-        function logout() {
-            location.reload();
-        }
-    </script>
+/* ---- Notifications ---- */
+function dueList(){
+  const now=new Date(),end=new Date(now.getTime()+864e5);
+  return scoped().filter(l=>l.followUp&&!done(l)&&new Date(l.followUp)<=end).sort((a,b)=>a.followUp.localeCompare(b.followUp));
+}
+function bell(){
+  const d=dueList(),now=new Date();$('bb').textContent=d.length;$('bb').classList.toggle('hidden',!d.length);
+  $('bp').innerHTML=d.length?d.map(l=>`<button class="w-full text-left p-2 rounded-lg hover:bg-white/5" onclick="toggleBell();openLead('${l.id}')"><div class="text-sm font-semibold">${esc(l.name)}</div><div class="text-xs ${new Date(l.followUp)<now?'text-rose-300':'text-amber-300'}">${new Date(l.followUp)<now?'Overdue':'Due'} · ${fdt(l.followUp)}</div></button>`).join(''):'<p class="p-4 text-sm text-slate-400 text-center">You are all caught up. No follow-ups due in the next 24 hours.</p>';
+}
+function toggleBell(){$('bp').classList.toggle('hidden')}
+document.addEventListener('click',e=>{if(!e.target.closest('#bp')&&!e.target.closest('[aria-label=Notifications]'))$('bp').classList.add('hidden')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideModal();if(S.open)closeDrawer()}});
+setInterval(()=>{if(S.user)render()},60000);
+</script>
 </body>
 </html>

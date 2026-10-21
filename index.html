@@ -41,6 +41,12 @@
                 </div>
                 <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition duration-150">Login to Dashboard</button>
             </form>
+            <div class="mt-4 text-xs text-gray-400 text-center bg-gray-50 p-3 rounded-lg border">
+                <strong>Hint:</strong><br>
+                MasterAdmin / ArjunDcosta<br>
+                Admin / AspyraRealty<br>
+                Agent1 / Agent123
+            </div>
         </div>
     </div>
 
@@ -260,31 +266,33 @@
 
         function handleLogin() {
             const role = document.getElementById('roleSelect').value;
-            const username = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
 
-            if(!username || !password) {
-                alert('Please enter username and password!');
-                return;
+            // Flexible validation check
+            let isValid = false;
+            if (role === 'MasterAdmin' && username === 'MasterAdmin' && password === 'ArjunDcosta') {
+                isValid = true;
+            } else if (role === 'Admin' && username === 'Admin' && password === 'AspyraRealty') {
+                isValid = true;
+            } else if (role === 'Agent' && username === 'Agent1' && password === 'Agent123') {
+                isValid = true;
             }
 
-            if((role === 'MasterAdmin' && username === 'MasterAdmin' && password === 'ArjunDcosta') ||
-               (role === 'Admin' && username === 'Admin' && password === 'AspyraRealty') ||
-               (role === 'Agent' && username === 'Agent1' && password === 'Agent123')) {
-                
+            if (isValid) {
                 currentUserRole = role;
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
                 document.getElementById('userBadge').innerText = role;
 
-                if(role === 'MasterAdmin') {
+                if (role === 'MasterAdmin') {
                     document.getElementById('selectAllTh').classList.remove('hidden');
                     document.getElementById('bulkDeleteBtn').classList.remove('hidden');
                 }
 
                 renderLeads();
             } else {
-                alert('Invalid Credentials!');
+                alert('Invalid Credentials! Please check username and password.');
             }
         }
 
@@ -293,7 +301,7 @@
             const tbody = document.getElementById('leadTableBody');
             tbody.innerHTML = '';
 
-            if(list.length === 0) {
+            if (list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">No leads found.</td></tr>`;
                 return;
             }

@@ -5,56 +5,208 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aspyra Realty - Lead Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 font-sans">
-    <div id="app" class="min-h-screen flex flex-col justify-between">
-        <!-- Login & Dashboard Container -->
-        <div class="flex items-center justify-center min-h-screen bg-gray-900 px-4">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-                <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Aspyra Realty Login</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Select Role</label>
-                        <select id="roleSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
-                            <option value="MasterAdmin">Master Admin</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Agent">Agent</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Username</label>
-                        <input type="text" id="usernameInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Enter username">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" id="passwordInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Enter password">
-                    </div>
-                    <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 font-semibold">Login</button>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-900 px-4">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">Aspyra Realty</h2>
+                <p class="text-gray-500 text-sm mt-1">Lead Tracker & Management System</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Role Select Karein</label>
+                    <select id="roleSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500">
+                        <option value="MasterAdmin">Master Admin</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Agent">Agent</option>
+                    </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="usernameInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500" placeholder="Username daalein">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="passwordInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500" placeholder="Password daalein">
+                </div>
+                <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full bg-blue-600 text-white p-2.5 rounded-md hover:bg-blue-700 font-semibold shadow transition duration-200">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center">
+            <h1 class="text-xl font-bold">Aspyra Realty Tracker</h1>
+            <div class="flex items-center gap-4">
+                <span id="userBadge" class="bg-blue-700 px-3 py-1 rounded text-sm font-semibold"></span>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm font-medium">Logout</button>
+            </div>
+        </header>
+
+        <main class="p-6 flex-1 max-w-7xl w-full mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Leads Overview</h2>
+                <div class="flex gap-2">
+                    <button id="bulkDeleteBtn" onclick="deleteSelectedLeads()" class="hidden bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 text-sm font-semibold">
+                        <i class="fa-solid fa-trash mr-1"></i> Bulk Delete Selected
+                    </button>
+                    <button onclick="openAddLeadModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-semibold">
+                        + Add New Lead
+                    </button>
+                </div>
+            </div>
+
+            <!-- LEADS TABLE -->
+            <div class="bg-white shadow rounded-lg overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th id="selectAllTh" class="p-4 hidden"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+                            <th class="p-4 font-semibold text-gray-600">Client Name</th>
+                            <th class="p-4 font-semibold text-gray-600">Phone</th>
+                            <th class="p-4 font-semibold text-gray-600">Assigned Agent</th>
+                            <th class="p-4 font-semibold text-gray-600">Status</th>
+                            <th class="p-4 font-semibold text-gray-600">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadTableBody">
+                        <!-- Dynamic Leads Render Here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- ADD LEAD MODAL -->
+    <div id="addLeadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+            <h3 class="text-lg font-bold mb-4">Add New Lead</h3>
+            <div class="space-y-3">
+                <input type="text" id="leadName" placeholder="Lead Name" class="w-full p-2 border rounded">
+                <input type="text" id="leadPhone" placeholder="Phone Number" class="w-full p-2 border rounded">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Assign To Agent</label>
+                    <select id="assignAgentSelect" class="w-full p-2 border rounded">
+                        <option value="Agent 1">Agent 1</option>
+                        <option value="Agent 2">Agent 2</option>
+                        <option value="Agent 3">Agent 3</option>
+                        <option value="Unassigned">Unassigned</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeAddLeadModal()" class="px-4 py-2 border rounded text-gray-600">Cancel</button>
+                <button onclick="saveLead()" class="px-4 py-2 bg-blue-600 text-white rounded">Save Lead</button>
             </div>
         </div>
     </div>
 
     <script>
+        let currentUserRole = '';
+        let leads = [
+            { id: 1, name: "Rahul Sharma", phone: "9876543210", agent: "Agent 1", status: "New" },
+            { id: 2, name: "Priya Patel", phone: "9123456789", agent: "Agent 2", status: "In Progress" }
+        ];
+
         function handleLogin() {
             const role = document.getElementById('roleSelect').value;
             const username = document.getElementById('usernameInput').value;
             const password = document.getElementById('passwordInput').value;
 
             if(!username || !password) {
-                alert('Please enter username and password');
+                alert('Username aur Password fill karein!');
                 return;
             }
 
-            // Simple validation simulation & dashboard load trigger
             if((role === 'MasterAdmin' && username === 'MasterAdmin' && password === 'ArjunDcosta') ||
                (role === 'Admin' && username === 'Admin' && password === 'AspyraRealty') ||
                (role === 'Agent' && username === 'Agent1' && password === 'Agent123')) {
-                alert('Login Successful! Loading dashboard...');
-                // Yahan aapka dashboard render logic trigger hoga
+                
+                currentUserRole = role;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                document.getElementById('userBadge').innerText = role;
+
+                if(role === 'MasterAdmin') {
+                    document.getElementById('selectAllTh').classList.remove('hidden');
+                    document.getElementById('bulkDeleteBtn').classList.remove('hidden');
+                }
+
+                renderLeads();
             } else {
                 alert('Invalid Credentials!');
             }
+        }
+
+        function renderLeads() {
+            const tbody = document.getElementById('leadTableBody');
+            tbody.innerHTML = '';
+
+            leads.forEach(lead => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+
+                let checkTd = currentUserRole === 'MasterAdmin' 
+                    ? `<td class="p-4"><input type="checkbox" class="lead-checkbox" value="${lead.id}"></td>` 
+                    : '';
+
+                tr.innerHTML = `
+                    ${checkTd}
+                    <td class="p-4 font-medium text-gray-800">${lead.name}</td>
+                    <td class="p-4 text-gray-600">${lead.phone}</td>
+                    <td class="p-4 text-blue-600 font-semibold">${lead.agent}</td>
+                    <td class="p-4"><span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">${lead.status}</span></td>
+                    <td class="p-4">
+                        <a href="https://wa.me/91${lead.phone}" target="_blank" class="text-green-600 hover:text-green-800 mr-2"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddLeadModal() { document.getElementById('addLeadModal').classList.remove('hidden'); }
+        function closeAddLeadModal() { document.getElementById('addLeadModal').classList.add('hidden'); }
+
+        function saveLead() {
+            const name = document.getElementById('leadName').value;
+            const phone = document.getElementById('leadPhone').value;
+            const agent = document.getElementById('assignAgentSelect').value;
+
+            if(!name || !phone) {
+                alert('Name aur Phone enter karein!');
+                return;
+            }
+
+            leads.push({ id: Date.now(), name, phone, agent, status: "New" });
+            renderLeads();
+            closeAddLeadModal();
+            document.getElementById('leadName').value = '';
+            document.getElementById('leadPhone').value = '';
+        }
+
+        function toggleSelectAll(master) {
+            document.querySelectorAll('.lead-checkbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function deleteSelectedLeads() {
+            const selected = Array.from(document.querySelectorAll('.lead-checkbox:checked')).map(cb => Number(cb.value));
+            if(selected.length === 0) {
+                alert('Kam se kam 1 lead select karein!');
+                return;
+            }
+            if(confirm('Kya aap selected leads delete karna chahte hain?')) {
+                leads = leads.filter(l => !selected.includes(l.id));
+                renderLeads();
+            }
+        }
+
+        function logout() {
+            location.reload();
         }
     </script>
 </body>

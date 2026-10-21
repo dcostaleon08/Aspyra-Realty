@@ -16,4 +16,562 @@
 body{font-family:Manrope,sans-serif;background:#0b1015;color:#e6e9ee;background-image:radial-gradient(900px 400px at 85% -10%,rgba(201,162,75,.12),transparent),radial-gradient(700px 400px at -10% 30%,rgba(45,212,191,.07),transparent);background-attachment:fixed}
 .serif{font-family:Fraunces,serif}
 .glass{background:rgba(255,255,255,.04);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);border-radius:14px}
-.in{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.5rem .75rem;font-size:.875
+.in{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.5rem .75rem;font-size:.875rem;outline:none}
+.in:focus{border-color:#c9a24b;box-shadow:0 0 0 2px rgba(201,162,75,.25)}
+.in option{background:#141a21}
+.btn{background:#c9a24b;color:#1a1405;font-weight:700;border-radius:10px;padding:.5rem 1rem;font-size:.875rem}
+.btn:hover{background:#d8b45f}
+.ghost{border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.5rem .9rem;font-size:.875rem}
+.ghost:hover{background:rgba(255,255,255,.07)}
+.lbl{font-size:.75rem;color:#8b95a3;margin-bottom:.25rem;display:block}
+.chip{font-size:.7rem;font-weight:600;padding:.15rem .55rem;border-radius:999px;white-space:nowrap;display:inline-block}
+.col.over{outline:2px dashed #c9a24b}
+.dz{border:2px dashed rgba(255,255,255,.18);border-radius:12px;cursor:pointer}.dz.over,.dz:hover{border-color:#c9a24b;background:rgba(201,162,75,.08)}
+.drawer{transform:translateX(100%);transition:transform .25s}.drawer.on{transform:none}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2a3340;border-radius:8px}
+button:focus-visible,a:focus-visible{outline:2px solid #c9a24b;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- LOGIN -->
+<div id="login" class="min-h-screen flex items-center justify-center p-4">
+  <form id="lf" class="glass w-full max-w-sm p-8 space-y-4" autocomplete="off">
+    <div class="text-center mb-2">
+      <div class="w-12 h-12 mx-auto rounded-xl bg-[#c9a24b] text-[#1a1405] flex items-center justify-center text-xl mb-3"><i class="fa-solid fa-building"></i></div>
+      <h1 class="serif text-3xl">Aspyra Realty</h1>
+      <p class="text-sm text-slate-400 mt-1">Sign in to your lead workspace</p>
+    </div>
+    <div><label class="lbl" for="u">Username</label><input id="u" class="in" required></div>
+    <div><label class="lbl" for="p">Password</label><input id="p" type="password" class="in" required></div>
+    <p id="le" class="text-sm text-rose-400 hidden">Username or password is incorrect. Check both and try again.</p>
+    <button class="btn w-full py-2.5">Sign in</button>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="sticky top-0 z-30 bg-[#0b1015]/80 backdrop-blur border-b border-white/10">
+    <div class="max-w-[1500px] mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-[#c9a24b] text-[#1a1405] flex items-center justify-center"><i class="fa-solid fa-building"></i></div>
+      <div class="serif text-xl leading-none">Aspyra Realty<div class="font-[Manrope] text-[11px] text-slate-400 font-medium mt-1" id="who"></div></div>
+      <div class="flex-1"></div>
+      <span id="mode" class="hidden text-xs text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1" title="Add your Firebase config to sync live">Local mode</span>
+      <div class="relative">
+        <button onclick="toggleBell()" class="ghost relative" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bb" class="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-[11px] font-bold flex items-center justify-center hidden">0</span></button>
+        <div id="bp" class="hidden absolute right-0 mt-2 w-80 max-w-[90vw] glass bg-[#141a21] p-2 max-h-96 overflow-auto shadow-2xl"></div>
+      </div>
+      <button onclick="logout()" class="ghost"><i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline ml-2">Sign out</span></button>
+    </div>
+  </header>
+
+  <main class="max-w-[1500px] mx-auto px-4 py-6 space-y-5">
+    <section id="kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></section>
+
+    <section class="glass p-4 space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div class="md:col-span-2 relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i><input id="fq" class="in pl-9" placeholder="Search name, phone, location, property type" oninput="S.f.q=this.value;render()"></div>
+        <select id="fs" class="in" onchange="S.f.status=this.value;render()"></select>
+        <select id="fa" class="in" onchange="S.f.agent=this.value;render()"></select>
+        <select id="ff" class="in" onchange="S.f.fu=this.value;render()">
+          <option value="">Any follow-up</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="week">Next 7 days</option><option value="none">No follow-up set</option>
+        </select>
+        <div class="flex gap-2"><input type="date" class="in" title="Follow-up from" onchange="S.f.from=this.value;render()"><input type="date" class="in" title="Follow-up to" onchange="S.f.to=this.value;render()"></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex rounded-lg border border-white/10 overflow-hidden text-sm">
+          <button id="vt" onclick="setView('table')" class="px-3 py-2"><i class="fa-solid fa-table-list mr-2"></i>Table</button>
+          <button id="vk" onclick="setView('board')" class="px-3 py-2"><i class="fa-solid fa-table-columns mr-2"></i>Board</button>
+        </div>
+        <span id="cnt" class="text-sm text-slate-400"></span>
+        <div class="flex-1"></div>
+        <button id="bd" onclick="askDelete()" class="hidden px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-sm font-semibold"><i class="fa-solid fa-trash mr-2"></i><span></span></button>
+        <button id="addb" onclick="openBulk()" class="ghost"><i class="fa-solid fa-file-import mr-2"></i>Bulk add</button>
+        <button id="add" onclick="openForm()" class="btn"><i class="fa-solid fa-plus mr-2"></i>Add lead</button>
+      </div>
+    </section>
+
+    <section id="list"></section>
+  </main>
+</div>
+
+<!-- DRAWER -->
+<div id="dov" class="fixed inset-0 bg-black/60 z-40 hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer fixed top-0 right-0 h-full w-full max-w-lg z-50 bg-[#10161d] border-l border-white/10 overflow-y-auto"></aside>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-start sm:items-center justify-center p-4 overflow-y-auto"><div id="mb" class="glass bg-[#10161d] w-full max-w-xl p-6"></div></div>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden bg-[#1c2530] border border-white/10 rounded-xl px-4 py-3 text-sm shadow-2xl"></div>
+
+<script>
+/* ================= FIREBASE CONFIG TEMPLATE =================
+   Paste your Firebase web-app config below. Until then the app runs in
+   Local mode (data saved in this browser only).
+   Realtime Database data lives at /leads                          */
+const FB_CFG={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId:"YOUR_PROJECT",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"000000000000",
+  appId:"YOUR_APP_ID"
+};
+
+/* ================= DATA LAYER ================= */
+const USEFB=typeof firebase!=='undefined' &&
+  !!FB_CFG.apiKey && !FB_CFG.apiKey.startsWith('YOUR_') &&
+  !!FB_CFG.databaseURL && !FB_CFG.databaseURL.includes('YOUR_PROJECT') &&
+  !!FB_CFG.projectId && !FB_CFG.projectId.startsWith('YOUR_');
+const DB=USEFB?(()=>{
+  firebase.initializeApp(FB_CFG);const r=firebase.database().ref('leads');
+  return{
+    sub:cb=>r.on('value',s=>cb(Object.values(s.val()||{}))),
+    save:l=>r.child(l.id).set(l),
+    del:ids=>{const u={};ids.forEach(i=>u[i]=null);return r.update(u)},
+    saveMany:ls=>{const u={};ls.forEach(l=>u[l.id]=l);return r.update(u)}
+  };
+})():(()=>{
+  const K='aspyra_leads_v1';let cb=()=>{};
+  const load=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}};
+  const put=a=>{try{localStorage.setItem(K,JSON.stringify(a))}catch(e){}cb(a)};
+  window.addEventListener('storage',e=>{if(e.key===K)cb(load())});
+  return{sub:f=>{cb=f;f(load())},save:l=>{const a=load().filter(x=>x.id!==l.id);a.push(l);put(a)},del:ids=>put(load().filter(x=>!ids.includes(x.id))),saveMany:ls=>{const ids=ls.map(l=>l.id);put(load().filter(x=>!ids.includes(x.id)).concat(ls))}};
+})();
+
+/* ================= CONSTANTS & STATE ================= */
+const USERS={MasterAdmin:{p:'ArjunDcosta',role:'master',name:'Master Admin'},Admin:{p:'AspyraRealty',role:'admin',name:'Admin'},Agent1:{p:'Agent123',role:'agent',name:'Agent 1'}};
+const STATUSES=['New','Contacted','Site Visit Scheduled','Negotiation','Closed','Lost'];
+const SC={'New':'#60a5fa','Contacted':'#a78bfa','Site Visit Scheduled':'#fbbf24','Negotiation':'#fb923c','Closed':'#2dd4bf','Lost':'#f87171'};
+const AGENTS=['Agent 1','Agent 2','Agent 3'],TYPES=['Flat','Villa','Plot','Commercial'];
+const POSS=['Ready to move','Within 3 months','Within 6 months','Within 1 year','1 year or more'];
+const S={user:null,leads:[],view:'table',sel:new Set(),open:null,f:{q:'',status:'',agent:'',fu:'',from:'',to:''}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isMaster=()=>S.user.role==='master',isAgent=()=>S.user.role==='agent';
+const fmtL=n=>{n=+n||0;return n>=100?'₹'+(+(n/100).toFixed(2))+'Cr':'₹'+(+n.toFixed(1))+'L'};
+const budget=l=>(+l.bMin||+l.bMax)?(+l.bMin===+l.bMax?fmtL(l.bMin):fmtL(l.bMin)+' - '+fmtL(l.bMax)):'Budget not set';
+const fdt=s=>s?new Date(s).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+const dkey=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const phoneDigits=p=>{let d=String(p).replace(/\D/g,'');return d.length===10?'91'+d:d};
+const done=l=>l.status==='Closed'||l.status==='Lost';
+const tl=l=>l.timeline||[];
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hidden'),2600)}
+function log(l,text,kind){(l.timeline=tl(l)).push({t:new Date().toISOString(),by:S.user.name,text,kind:kind||'note'})}
+function save(l){l.updated=new Date().toISOString();return DB.save(l)}
+
+/* ================= AUTH ================= */
+$('lf').addEventListener('submit',e=>{
+  e.preventDefault();const u=USERS[$('u').value.trim()];
+  if(!u||u.p!==$('p').value){$('le').classList.remove('hidden');return}
+  S.user={...u,id:$('u').value.trim()};$('lf').reset();$('le').classList.add('hidden');
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');boot();
+});
+function logout(){S.user=null;S.sel.clear();closeDrawer();$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+
+let subscribed=false;
+function boot(){
+  $('who').textContent=S.user.name+' · '+({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role];$('mode').classList.toggle('hidden',USEFB);
+  $('add').classList.toggle('hidden',isAgent());$('addb').classList.toggle('hidden',isAgent());
+  $('fa').classList.toggle('hidden',isAgent());$('fs').innerHTML='<option value="">All statuses</option>'+STATUSES.map(s=>`<option>${s}</option>`).join('');
+  $('fa').innerHTML='<option value="">All agents</option>'+AGENTS.concat('Unassigned').map(s=>`<option>${s}</option>`).join('');
+  S.f={q:'',status:'',agent:'',fu:'',from:'',to:''};$('fq').value='';$('fs').value='';$('fa').value='';$('ff').value='';
+  setView(S.view);
+  if(!subscribed){subscribed=true;DB.sub(a=>{S.leads=a.map(x=>({...x,timeline:x.timeline||[]}));if(S.user){render();if(S.open)drawer()}})}
+  else render();
+}
+
+/* ================= FILTERING ================= */
+function scoped(){return isAgent()?S.leads.filter(l=>l.agent===S.user.name):S.leads}
+function visible(){
+  const f=S.f,q=f.q.trim().toLowerCase(),now=new Date(),td=dkey(now),wk=new Date(now.getTime()+7*864e5);
+  return scoped().filter(l=>{
+    if(q&&![l.name,l.phone,l.location,l.type].join(' ').toLowerCase().includes(q))return false;
+    if(f.status&&l.status!==f.status)return false;
+    if(f.agent&&l.agent!==f.agent)return false;
+    if(f.from&&(!l.followUp||dkey(l.followUp)<f.from))return false;
+    if(f.to&&(!l.followUp||dkey(l.followUp)>f.to))return false;
+    if(f.fu){
+      if(f.fu==='none')return !l.followUp;
+      if(!l.followUp||done(l))return false;
+      const d=new Date(l.followUp);
+      if(f.fu==='overdue')return d<now;
+      if(f.fu==='today')return dkey(d)===td;
+      if(f.fu==='week')return d>=now&&d<=wk;
+    }
+    return true;
+  }).sort((a,b)=>(b.updated||'').localeCompare(a.updated||''));
+}
+
+/* ================= RENDER ================= */
+function render(){kpis();list();bell();bulkBar()}
+function setView(v){S.view=v;[['vt','table'],['vk','board']].forEach(([id,k])=>{$(id).className='px-3 py-2 '+(v===k?'bg-[#c9a24b] text-[#1a1405] font-bold':'text-slate-300 hover:bg-white/5')});if(S.user)list()}
+
+function kpis(){
+  const L=scoped(),now=new Date(),td=dkey(now);
+  const due=L.filter(l=>l.followUp&&!done(l)&&dkey(l.followUp)===td).length;
+  const over=L.filter(l=>l.followUp&&!done(l)&&new Date(l.followUp)<now&&dkey(l.followUp)!==td).length;
+  const sv=L.filter(l=>l.status==='Site Visit Scheduled').length;
+  const mid=l=>((+l.bMin||0)+(+l.bMax||0))/2;
+  const won=L.filter(l=>l.status==='Closed'),neg=L.filter(l=>l.status==='Negotiation');
+  const card=(ic,c,lab,val,sub)=>`<div class="glass p-4"><div class="flex items-center justify-between"><span class="text-sm text-slate-400">${lab}</span><span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:${c}22;color:${c}"><i class="fa-solid ${ic}"></i></span></div><div class="serif text-3xl mt-2">${val}</div><div class="text-xs text-slate-400 mt-1">${sub}</div></div>`;
+  const tot=L.length||1;
+  const bar=STATUSES.map(s=>{const n=L.filter(l=>l.status===s).length;return n?`<div title="${s}: ${n}" style="width:${n/tot*100}%;background:${SC[s]}"></div>`:''}).join('');
+  $('kpis').innerHTML=
+    card('fa-users','#60a5fa','Total leads',L.length,`<div class="flex h-1.5 rounded-full overflow-hidden bg-white/10 mt-1">${bar}</div>`)+
+    card('fa-bell','#fb923c','Follow-ups due today',due,over?`<span class="text-rose-400">${over} overdue</span>`:'Nothing overdue')+
+    card('fa-location-dot','#fbbf24','Site visits scheduled',sv,'Leads awaiting a visit')+
+    card('fa-handshake','#2dd4bf','Deals closed',`${won.length} <span class="text-lg text-slate-400">· ${fmtL(won.reduce((a,l)=>a+mid(l),0))}</span>`,`Pipeline in negotiation: ${fmtL(neg.reduce((a,l)=>a+mid(l),0))}`);
+}
+
+function fuBadge(l){
+  if(!l.followUp)return '<span class="chip bg-white/5 text-slate-400">No follow-up</span>';
+  if(done(l))return `<span class="chip bg-white/5 text-slate-400">${fdt(l.followUp)}</span>`;
+  const d=new Date(l.followUp),now=new Date();
+  if(d<now)return `<span class="chip bg-rose-500/15 text-rose-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Overdue ${fdt(l.followUp)}</span>`;
+  if(dkey(d)===dkey(now))return `<span class="chip bg-amber-400/15 text-amber-300"><i class="fa-regular fa-clock mr-1"></i>Today ${d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}</span>`;
+  return `<span class="chip bg-sky-400/15 text-sky-300"><i class="fa-regular fa-calendar mr-1"></i>${fdt(l.followUp)}</span>`;
+}
+const stChip=s=>`<span class="chip" style="background:${SC[s]}22;color:${SC[s]}">${s}</span>`;
+const contact=l=>`<span class="inline-flex items-center gap-2"><span>${esc(l.phone)}</span><a href="https://wa.me/${phoneDigits(l.phone)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a><a href="tel:+${phoneDigits(l.phone)}" onclick="event.stopPropagation()" class="text-sky-400 hover:text-sky-300" title="Call"><i class="fa-solid fa-phone"></i></a></span>`;
+const agentSel=l=>`<select class="in !py-1 !text-xs !w-auto" ${isAgent()?'disabled':''} onclick="event.stopPropagation()" onchange="transfer('${l.id}',this.value)">${['Unassigned'].concat(AGENTS).map(a=>`<option ${a===l.agent?'selected':''}>${a}</option>`).join('')}</select>`;
+
+function list(){
+  const L=visible();$('cnt').textContent=L.length+' of '+scoped().length+' leads';
+  if(!L.length){$('list').innerHTML=`<div class="glass p-12 text-center text-slate-400"><i class="fa-regular fa-folder-open text-4xl mb-3"></i><p class="text-lg text-slate-200">${scoped().length?'No leads match these filters':'No leads yet'}</p><p class="text-sm mt-1">${scoped().length?'Clear a filter or change your search.':isAgent()?'Leads assigned to you will appear here.':'Add your first lead to start tracking.'}</p></div>`;return}
+  if(S.view==='board'){
+    $('list').innerHTML=`<div class="flex gap-3 overflow-x-auto pb-3">`+STATUSES.map(s=>{
+      const c=L.filter(l=>l.status===s);
+      return `<div class="col glass min-w-[285px] w-[285px] shrink-0 p-3" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="this.classList.remove('over');dropTo('${s}',event)">
+      <div class="flex items-center justify-between mb-3"><span class="font-semibold text-sm" style="color:${SC[s]}">${s}</span><span class="chip bg-white/10">${c.length}</span></div>
+      <div class="space-y-3">${c.map(card).join('')||'<p class="text-xs text-slate-500 text-center py-4">Drop a lead here</p>'}</div></div>`}).join('')+`</div>`;
+    return;
+  }
+  const all=L.length&&L.every(l=>S.sel.has(l.id));
+  $('list').innerHTML=`<div class="glass overflow-x-auto"><table class="w-full text-sm min-w-[1000px]"><thead class="text-left text-xs text-slate-400 border-b border-white/10"><tr>
+    ${isMaster()?`<th class="p-3 w-10"><input type="checkbox" ${all?'checked':''} onchange="selAll(this.checked)" aria-label="Select all"></th>`:''}
+    <th class="p-3">Client</th><th class="p-3">Phone</th><th class="p-3">Budget</th><th class="p-3">Location</th><th class="p-3">Type</th><th class="p-3">Agent</th><th class="p-3">Status</th><th class="p-3">Next follow-up</th><th class="p-3"></th></tr></thead><tbody>`+
+    L.map(l=>`<tr class="border-b border-white/5 hover:bg-white/[.03] cursor-pointer" onclick="openLead('${l.id}')">
+      ${isMaster()?`<td class="p-3" onclick="event.stopPropagation()"><input type="checkbox" ${S.sel.has(l.id)?'checked':''} onchange="sel('${l.id}',this.checked)"></td>`:''}
+      <td class="p-3 font-semibold">${esc(l.name)}</td><td class="p-3">${contact(l)}</td><td class="p-3 whitespace-nowrap">${budget(l)}</td>
+      <td class="p-3">${esc(l.location)||'—'}</td><td class="p-3">${esc(l.type)||'—'}</td><td class="p-3">${agentSel(l)}</td><td class="p-3">${stChip(l.status)}</td><td class="p-3">${fuBadge(l)}</td>
+      <td class="p-3 text-right whitespace-nowrap"><button class="ghost !px-2 !py-1" onclick="event.stopPropagation();openForm('${l.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button></td></tr>`).join('')+`</tbody></table></div>`;
+}
+function card(l){
+  return `<div draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${l.id}')" onclick="openLead('${l.id}')" class="rounded-xl bg-[#141a21] border border-white/10 p-3 cursor-pointer hover:border-[#c9a24b]/60 space-y-2">
+    <div class="flex items-start justify-between gap-2"><div class="font-semibold">${esc(l.name)}</div>${isMaster()?`<input type="checkbox" ${S.sel.has(l.id)?'checked':''} onclick="event.stopPropagation()" onchange="sel('${l.id}',this.checked)" aria-label="Select lead">`:''}</div>
+    <div class="text-sm">${contact(l)}</div>
+    <div class="text-sm text-[#c9a24b] font-semibold">${budget(l)}</div>
+    <div class="text-xs text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>${esc(l.location)||'No location'} · ${esc(l.type)||'N/A'}</div>
+    <div class="flex items-center justify-between gap-2 flex-wrap">${agentSel(l)}${fuBadge(l)}</div></div>`;
+}
+
+/* ================= ACTIONS ================= */
+function roleLabel(){return({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role]}
+async function transfer(id,to){
+  if(!S.user||isAgent()){render();return}
+  const l=S.leads.find(x=>x.id===id);
+  if(!l||l.agent===to||!['Unassigned'].concat(AGENTS).includes(to))return;
+  const from=l.agent,oldTimeline=tl(l).slice(),oldUpdated=l.updated;
+  l.agent=to;
+  log(l,`Transferred from ${from||'Unassigned'} to ${to} by ${roleLabel()}`,'transfer');
+  try{
+    await Promise.resolve(save(l));
+    toast('Lead transferred to '+to);
+  }catch(err){
+    l.agent=from;l.timeline=oldTimeline;l.updated=oldUpdated;
+    render();
+    if(S.open===id)drawer();
+    toast('Transfer failed. Assignment was restored; check your database rules.');
+  }
+}
+function dropTo(status,e){
+  const id=e.dataTransfer.getData('text/plain'),l=S.leads.find(x=>x.id===id);
+  if(l&&l.status!==status)setStatus(l,status);
+}
+function setStatus(l,status){
+  const old=l.status;l.status=status;if(done(l))l.followUp='';
+  log(l,`Status changed from ${old} to ${status}`,'status');save(l);toast('Status updated to '+status);
+}
+function sel(id,on){on?S.sel.add(id):S.sel.delete(id);bulkBar();if(S.view==='table')list()}
+function selAll(on){visible().forEach(l=>on?S.sel.add(l.id):S.sel.delete(l.id));list();bulkBar()}
+function bulkBar(){const b=$('bd'),show=isMaster()&&S.sel.size>0;b.classList.toggle('hidden',!show);if(show)b.querySelector('span').textContent='Delete '+S.sel.size+' selected'}
+function askDelete(){
+  if(!isMaster()||!S.sel.size)return;
+  showModal(`<h3 class="serif text-2xl mb-2">Delete ${S.sel.size} lead${S.sel.size>1?'s':''}?</h3><p class="text-sm text-slate-400 mb-5">This permanently removes the selected leads and their timelines. You can't undo this.</p>
+  <div class="flex justify-end gap-2"><button class="ghost" onclick="hideModal()">Keep leads</button><button class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-sm font-semibold" onclick="doDelete()">Delete permanently</button></div>`);
+}
+function doDelete(){
+  if(!isMaster())return;const ids=[...S.sel],n=ids.length;S.sel.clear();
+  if(S.open&&ids.includes(S.open))closeDrawer();
+  Promise.resolve(DB.del(ids)).then(()=>toast(n+' lead'+(n>1?'s':'')+' deleted')).catch(()=>toast('Delete failed. Check your database rules.'));hideModal();
+}
+function showModal(h){$('mb').className='glass bg-[#10161d] w-full max-w-xl p-6';$('mb').innerHTML=h;$('modal').classList.remove('hidden')}
+function hideModal(){$('modal').classList.add('hidden')}
+
+/* ---- Add / Edit form ---- */
+function openForm(id){
+  const l=id?S.leads.find(x=>x.id===id):null;if(!id&&isAgent())return;
+  const v=l||{name:'',phone:'',bMin:'',bMax:'',location:'',type:'Flat',poss:POSS[0],status:'New',agent:'Unassigned',followUp:''};
+  const opt=(arr,cur)=>arr.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  showModal(`<form id="lead-form" class="space-y-4"><div class="flex items-center justify-between"><h3 class="serif text-2xl">${l?'Edit lead':'Add lead'}</h3><button type="button" class="text-slate-400 hover:text-white" onclick="hideModal()" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div><label class="lbl">Client name</label><input name="name" class="in" required value="${esc(v.name)}"></div>
+  <div><label class="lbl">Phone</label><input name="phone" class="in" required inputmode="tel" value="${esc(v.phone)}"></div>
+  <div><label class="lbl">Budget minimum (₹ Lakhs)</label><input name="bMin" type="number" min="0" step="any" class="in" value="${esc(v.bMin)}" placeholder="75"></div>
+  <div><label class="lbl">Budget maximum (₹ Lakhs)</label><input name="bMax" type="number" min="0" step="any" class="in" value="${esc(v.bMax)}" placeholder="150"></div>
+  <div><label class="lbl">Location</label><input name="location" class="in" value="${esc(v.location)}"></div>
+  <div><label class="lbl">Property type</label><select name="type" class="in">${opt(['N/A'].concat(TYPES),v.type)}</select></div>
+  <div><label class="lbl">Preferred possession</label><select name="poss" class="in">${opt(POSS,v.poss)}</select></div>
+  <div><label class="lbl">Status</label><select name="status" class="in">${opt(STATUSES,v.status)}</select></div>
+  <div><label class="lbl">Assigned agent</label><select name="agent" class="in" ${isAgent()?'disabled':''}>${opt(['Unassigned'].concat(AGENTS),v.agent)}</select></div>
+  <div><label class="lbl">Next follow-up</label><input name="followUp" type="datetime-local" class="in" value="${esc(v.followUp)}"></div>
+  <div class="sm:col-span-2"><label class="lbl">Notes</label><textarea name="notes" rows="3" class="in" placeholder="Additional context, requirements, or preferences">${esc(v.notes||'')}</textarea></div></div>
+  <p id="fe" class="text-sm text-rose-400 hidden"></p>
+  <div class="flex justify-end gap-2"><button type="button" class="ghost" onclick="hideModal()">Cancel</button><button class="btn">${l?'Save changes':'Add lead'}</button></div></form>`);
+  $('lead-form').onsubmit=e=>{e.preventDefault();submitForm(id)};
+}
+function submitForm(id){
+  const fd=new FormData($('lead-form')),g=k=>(fd.get(k)||'').toString().trim(),err=m=>{$('fe').textContent=m;$('fe').classList.remove('hidden')};
+  if(g('phone').replace(/\D/g,'').length<10)return err('Enter a phone number with at least 10 digits.');
+  let bMin=+g('bMin'),bMax=+g('bMax');if(bMin&&!bMax)bMax=bMin;if(bMax&&bMax<bMin)return err('Maximum budget must be at least the minimum budget.');
+  let l=id?S.leads.find(x=>x.id===id):null;const isNew=!l;
+  const old=l?{status:l.status,agent:l.agent}:{};
+  if(isNew)l={id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),created:new Date().toISOString(),timeline:[],siteVisit:''};
+  if(!g('name'))return err('Enter the client name.');
+  Object.assign(l,{name:g('name'),phone:g('phone'),bMin,bMax,location:g('location'),type:g('type'),poss:g('poss'),status:g('status'),followUp:g('followUp'),notes:g('notes')});
+  if(!isAgent())l.agent=g('agent');else if(isNew)l.agent=S.user.name;
+  if(done(l))l.followUp='';
+  if(isNew){log(l,`Lead created by ${S.user.name}`,'system');if(l.agent!=='Unassigned')log(l,`Assigned to ${l.agent}`,'transfer');if(l.followUp)log(l,`Follow-up set for ${fdt(l.followUp)}`,'note')}
+  else{
+    if(old.agent!==l.agent)log(l,`Transferred to ${l.agent} by ${roleLabel()} (from ${old.agent})`,'transfer');
+    if(old.status!==l.status)log(l,`Status changed from ${old.status} to ${l.status}`,'status');
+    log(l,'Lead details updated','system');
+  }
+  save(l);hideModal();toast(isNew?'Lead added':'Changes saved');
+}
+
+/* ---- Drawer / timeline ---- */
+function openLead(id){S.open=id;drawer();$('dov').classList.remove('hidden');requestAnimationFrame(()=>$('drawer').classList.add('on'))}
+function closeDrawer(){S.open=null;$('drawer').classList.remove('on');$('dov').classList.add('hidden')}
+const ICON={call:['fa-phone','#60a5fa'],visit:['fa-location-dot','#fbbf24'],transfer:['fa-right-left','#a78bfa'],status:['fa-flag','#2dd4bf'],note:['fa-comment','#c9a24b'],system:['fa-circle-plus','#8b95a3']};
+function drawer(){
+  const l=S.leads.find(x=>x.id===S.open);if(!l){closeDrawer();return}
+  const keep=$('fu-note')?$('fu-note').value:'';
+  const row=(k,v)=>`<div><div class="text-xs text-slate-500">${k}</div><div class="text-sm">${v}</div></div>`;
+  $('drawer').innerHTML=`<div class="p-5 space-y-5">
+  <div class="flex items-start justify-between gap-3"><div><h2 class="serif text-2xl">${esc(l.name)}</h2><div class="text-sm mt-1">${contact(l)}</div></div>
+    <div class="flex gap-2"><button class="ghost" onclick="openForm('${l.id}')" title="Edit lead"><i class="fa-solid fa-pen"></i></button><button class="ghost" onclick="closeDrawer()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div></div>
+  <div class="glass p-4 grid grid-cols-2 gap-4">
+    ${row('Budget',budget(l))}${row('Location',esc(l.location)||'—')}${row('Property type',esc(l.type)||'—')}${row('Possession',esc(l.poss||'—'))}
+    ${row('Agent',agentSel(l))}${row('Next follow-up',fuBadge(l))}${l.siteVisit?row('Site visit',fdt(l.siteVisit)):''}${l.notes?`<div class="col-span-2">${row('Notes',esc(l.notes))}</div>`:''}</div>
+  <div><label class="lbl">Lead status</label><select class="in" onchange="setStatus(S.leads.find(x=>x.id==='${l.id}'),this.value)">${STATUSES.map(s=>`<option ${s===l.status?'selected':''}>${s}</option>`).join('')}</select></div>
+  <form id="fu-form" class="glass p-4 space-y-3"><div class="font-semibold text-sm">Add follow-up or remark</div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="lbl">Type</label><select id="fu-type" class="in"><option value="note">Remark</option><option value="call">Call made</option>${isAgent()?'':'<option value="visit">Site visit booked</option>'}</select></div>
+    <div><label class="lbl">Date and time</label><input id="fu-dt" type="datetime-local" class="in"></div></div>
+    <textarea id="fu-note" rows="2" class="in" placeholder="What happened or what comes next?" required>${esc(keep)}</textarea>
+    <button class="btn w-full">Add to timeline</button></form>
+  <div><div class="font-semibold text-sm mb-3">Activity timeline</div><div class="relative pl-6 space-y-4 before:absolute before:left-[9px] before:top-1 before:bottom-1 before:w-px before:bg-white/10">
+  ${tl(l).slice().reverse().map(e=>{const [ic,c]=ICON[e.kind]||ICON.note;return `<div class="relative"><span class="absolute -left-6 top-0.5 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[10px]" style="background:${c}33;color:${c}"><i class="fa-solid ${ic}"></i></span><div class="text-sm">${esc(e.text)}</div><div class="text-xs text-slate-500 mt-0.5">${fdt(e.t)} ·${esc(e.by)}</div></div>`}).join('')}</div></div></div>`;
+  $('fu-form').onsubmit=ev=>{ev.preventDefault();addEntry(l.id)};
+}
+function addEntry(id){
+  const l=S.leads.find(x=>x.id===id),type=$('fu-type').value,dt=$('fu-dt').value,note=$('fu-note').value.trim();if(!l||!note)return;
+  if(type==='visit'&&isAgent())return;
+  if(type==='visit'){
+    if(!dt){toast('Pick the site visit date and time');return}
+    l.siteVisit=dt;l.followUp=dt;if(!done(l)&&l.status!=='Site Visit Scheduled'){log(l,`Status changed from ${l.status} to Site Visit Scheduled`,'status');l.status='Site Visit Scheduled'}
+    log(l,`Site visit booked for ${fdt(dt)}: ${note}`,'visit');
+  }else{
+    log(l,(type==='call'?'Call made: ':'Remark: ')+note+(dt?` (next follow-up ${fdt(dt)})`:''),type);
+    if(dt&&!done(l))l.followUp=dt;
+  }
+  $('fu-note').value='';save(l);toast('Added to timeline');
+}
+
+/* ---- Bulk upload: paste, CSV, XLSX, XLS ---- */
+const BH={name:['name','clientname','client','customername','customer','leadname','fullname','contactname'],
+ phone:['phone','phonenumber','mobile','mobilenumber','mobileno','phoneno','contact','contactnumber','contactno','whatsapp','cell','tel','telephone'],
+ type:['propertytype','type','property','category'],budget:['budget','budgetrange','pricerange','price'],
+ location:['location','area','city','locality','place','address'],status:['status','leadstatus','stage'],
+ agent:['agent','assignedagent','assignedto','agentname','owner','assignee'],notes:['notes','note','remarks','remark','comments','comment']};
+const BORDER=['name','phone','type','budget','location','status','agent','notes'];
+const BLAB={name:'Name',phone:'Phone',type:'Property type',budget:'Budget',location:'Location',status:'Status',agent:'Agent',notes:'Notes'};
+const hKey=c=>{const n=String(c).toLowerCase().replace(/[^a-z0-9]/g,'');return BORDER.find(k=>BH[k].includes(n))||''};
+const pDigits=s=>{let d=String(s).replace(/\D/g,'');if(d.length===11&&d[0]==='0')d=d.slice(1);return d};
+const isPh=s=>pDigits(s).length>=10&&/^[\d\s+\-().]+$/.test(String(s));
+function splitRow(line,d){const o=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){c+='"';i++}else q=!q}else if(ch===d&&!q){o.push(c.trim());c=''}else c+=ch}o.push(c.trim());return o}
+function parseAmt(s){const m=String(s).replace(/[₹,\s]/g,'').match(/^([\d.]+)(cr|crore|crores|l|lac|lacs|lakh|lakhs)?$/i);return m?{n:parseFloat(m[1]),u:m[2]?(/^c/i.test(m[2])?'c':'l'):''}:null}
+function parseBudget(s){
+  const p=String(s).split(/\s*(?:-|–|—|\bto\b)\s*/i).filter(Boolean).map(parseAmt);
+  if(!p.length||p.length>2||p.some(x=>!x||isNaN(x.n)))return null;
+  const u=p.map(x=>x.u).find(x=>x)||'l',v=p.map(x=>x.n*((x.u||u)==='c'?100:1)),a=v[0],b=v.length>1?v[1]:v[0];
+  return{bMin:Math.min(a,b),bMax:Math.max(a,b)};
+}
+const typeOf=t=>{t=String(t).toLowerCase().trim();return /^(flat|apartment|apt)/.test(t)?'Flat':/^villa/.test(t)?'Villa':/^(plot|land)/.test(t)?'Plot':/^(commercial|shop|office)/.test(t)?'Commercial':null};
+const statusOf=t=>{t=String(t).toLowerCase().trim();const e=STATUSES.find(x=>x.toLowerCase()===t);if(e)return e;return /^(site|visit)/.test(t)?'Site Visit Scheduled':/^negot/.test(t)?'Negotiation':/^contact/.test(t)?'Contacted':/^(clos|won|sold)/.test(t)?'Closed':/^(lost|dead|drop|not interested)/.test(t)?'Lost':/^(new|fresh|open)/.test(t)?'New':null};
+const agentOf=t=>{const n=String(t).toLowerCase().replace(/[^a-z0-9]/g,'');if(!n||/^(unassigned|none|na|nil)$/.test(n))return 'Unassigned';const m=n.match(/^(?:agent)?([123])$/);return m?'Agent '+m[1]:null};
+
+function detectDelimiter(text){
+  const first=(String(text).split(/\r?\n/).find(line=>line.trim())||'');
+  let quoted=false,counts={'\t':0,',':0,';':0,'|':0};
+  for(let i=0;i<first.length;i++){
+    const ch=first[i];
+    if(ch==='"'){if(quoted&&first[i+1]==='"'){i++;continue}quoted=!quoted;continue}
+    if(!quoted&&Object.prototype.hasOwnProperty.call(counts,ch))counts[ch]++;
+  }
+  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+  return counts[best]>0?best:null;
+}
+function parseDelimited(text,delimiter){
+  const rows=[];let row=[],cell='',quoted=false,started=false;
+  const src=String(text||'').replace(/^\uFEFF/,'');
+  for(let i=0;i<src.length;i++){
+    const ch=src[i];
+    if(ch==='"'){
+      if(quoted&&src[i+1]==='"'){cell+='"';i++}
+      else if(!quoted&&!cell.length)quoted=true;
+      else if(quoted)quoted=false;
+      else cell+=ch;
+      started=true;
+    }else if(ch===delimiter&&!quoted){
+      row.push(cell.trim());cell='';started=false;
+    }else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&src[i+1]==='\n')i++;
+      row.push(cell.trim());
+      if(row.some(v=>v!==''))rows.push(row);
+      row=[];cell='';started=false;
+    }else{cell+=ch;started=true}
+  }
+  if(cell.length||row.length||started){
+    row.push(cell.trim());
+    if(row.some(v=>v!==''))rows.push(row);
+  }
+  return rows;
+}
+function bulkRows(text){
+  const src=String(text||'').trim();
+  if(!src)return [];
+  const d=detectDelimiter(src);
+  if(!d)return src.split(/\r?\n/).map(line=>line.trim()? [line.trim()]:null);
+  return parseDelimited(src,d);
+}
+function bulkParse(){
+  const rows=bulkRows($('bk-txt').value),ok=[],bad=[],skipDup=$('bk-dup').checked,dAg=$('bk-ag').value,dSt=$('bk-st').value;
+  const seen=new Set(S.leads.map(l=>pDigits(l.phone).slice(-10)));
+  const fi=rows.findIndex(r=>r&&r.some(c=>c)),hdr=fi>=0?rows[fi].map(hKey):null;
+  const isHdr=!!hdr&&(hdr.includes('name')||hdr.includes('phone')||hdr.filter(Boolean).length>=2),idx={};
+  if(isHdr)hdr.forEach((k,j)=>{if(k&&idx[k]===undefined)idx[k]=j});else BORDER.forEach((k,j)=>idx[k]=j);
+  const note=isHdr?'Columns detected: '+Object.keys(idx).map(k=>BLAB[k]).join(', ')+'. Other columns are ignored.'+(idx.name===undefined||idx.phone===undefined?' A Name and a Phone column are required.':''):'No header row found. Reading columns in this order: Name, Phone, Property type, Budget, Location, Status, Agent, Notes.';
+  for(let i=isHdr?fi+1:Math.max(fi,0);i<rows.length;i++){
+    const c=rows[i];if(!c||c.every(x=>!String(x).trim()))continue;
+    const n=i+1,g=k=>idx[k]===undefined||c[idx[k]]==null?'':String(c[idx[k]]).trim();
+    let name=g('name'),ph=g('phone');
+    if(!isHdr){
+      if(c.length===1){const m=c[0].match(/\+?\d[\d\s\-()]{8,}\d/);if(m){ph=m[0];name=c[0].replace(m[0],' ').replace(/[,:;|()\-]+/g,' ').replace(/\s+/g,' ').trim()}}
+      else if(isPh(c[0])&&!isPh(c[1]||'')){name=g('phone');ph=g('name')}
+    }
+    const dg=pDigits(ph),why=[];
+    if(!name)why.push('Name is missing');
+    if(!ph)why.push('Phone number is missing');else if(dg.length<10||dg.length>15)why.push('Phone number looks invalid');
+    if(why.length){bad.push({n,name,phone:ph,why:why.join(' and ')});continue}
+    const key=dg.slice(-10);
+    if(skipDup&&seen.has(key)){bad.push({n,name,phone:ph,why:'Phone number already exists in your leads or earlier in this file',dup:true});continue}
+    seen.add(key);
+    const w=[];let type='N/A',bMin=0,bMax=0,status=dSt,agent=dAg;
+    const tR=g('type');if(tR){const t=typeOf(tR);if(t)type=t;else w.push('Property type “'+tR+'” not recognised, set to N/A')}
+    const bR=g('budget');if(bR){const b=parseBudget(bR);if(b){bMin=b.bMin;bMax=b.bMax}else w.push('Budget “'+bR+'” could not be read, left blank')}
+    const sR=g('status');if(sR){const x=statusOf(sR);if(x)status=x;else w.push('Status “'+sR+'” not recognised, using '+dSt)}
+    const aR=g('agent');if(aR){const x=agentOf(aR);if(x)agent=x;else w.push('Agent “'+aR+'” not recognised, using '+dAg)}
+    ok.push({n,name,phone:(ph.trim().startsWith('+')?'+':'')+dg,type,bMin,bMax,location:g('location'),status,agent,notes:g('notes'),w});
+  }
+  const over=ok.length>2000;if(over)ok.length=2000;
+  return{ok,bad,note,over};
+}
+function bulkPreview(reset){
+  if(reset)S.bx=new Set();
+  if(!$('bk-txt').value.trim()){S.bk=null;$('bk-pv').innerHTML='<p class="text-sm text-slate-400">Paste rows or drop a file to see a preview here.</p>';bulkCount();return}
+  const r=S.bk=bulkParse(),dup=r.bad.filter(b=>b.dup).length,inv=r.bad.length-dup,warn=r.ok.filter(x=>x.w.length).length,ex=S.bx;
+  const th=h=>`<th class="p-2">${h}</th>`;
+  $('bk-pv').innerHTML=`<div class="flex flex-wrap gap-2 mb-2"><span class="chip bg-emerald-500/15 text-emerald-300">${r.ok.length} valid leads found</span><span class="chip ${inv?'bg-rose-500/15 text-rose-300':'bg-white/5 text-slate-400'}">${inv} invalid rows skipped</span>${dup?`<span class="chip bg-sky-400/15 text-sky-300">${dup} duplicates skipped</span>`:''}${warn?`<span class="chip bg-amber-400/15 text-amber-300">${warn} with defaults applied</span>`:''}${r.over?'<span class="chip bg-amber-400/15 text-amber-300">Only the first 2000 valid leads are used</span>':''}</div>
+  <p class="text-xs text-slate-400 mb-2">${esc(r.note)}</p>
+  ${r.ok.length?`<div class="overflow-auto max-h-64 rounded-lg border border-white/10"><table class="w-full text-xs min-w-[780px]"><thead class="sticky top-0 bg-[#141a21] text-left text-slate-400"><tr><th class="p-2 w-8"><input type="checkbox" checked onchange="bulkAll(this.checked)" aria-label="Include all rows"></th>${['Row','Name','Phone','Type','Budget','Location','Status','Agent','Notes'].map(th).join('')}</tr></thead><tbody>${r.ok.slice(0,200).map(x=>`<tr class="border-t border-white/5"><td class="p-2"><input type="checkbox" class="bk-c" ${ex.has(x.n)?'':'checked'} onchange="bulkTog(${x.n},this.checked)" aria-label="Include row ${x.n}"></td><td class="p-2 text-slate-500">${x.n}</td><td class="p-2 font-semibold">${esc(x.name)}${x.w.length?` <i class="fa-solid fa-triangle-exclamation text-amber-300" title="${esc(x.w.join('; '))}"></i>`:''}</td><td class="p-2">${esc(x.phone)}</td><td class="p-2">${esc(x.type)}</td><td class="p-2 whitespace-nowrap">${budget(x)}</td><td class="p-2">${esc(x.location)||'—'}</td><td class="p-2">${esc(x.status)}</td><td class="p-2">${esc(x.agent)}</td><td class="p-2 max-w-[160px] truncate" title="${esc(x.notes)}">${esc(x.notes)||'—'}</td></tr>`).join('')}</tbody></table></div>${r.ok.length>200?`<p class="text-xs text-slate-500 mt-1">Showing the first 200 of ${r.ok.length}. All included rows are imported.</p>`:''}`:''}
+  ${r.bad.length?`<details class="mt-2" ${inv?'open':''}><summary class="text-xs cursor-pointer text-slate-300">Skipped rows (${r.bad.length})</summary><ul class="mt-1 max-h-28 overflow-auto text-xs text-rose-300 space-y-1">${r.bad.map(b=>`<li>Row ${b.n}: ${esc(b.name||'(no name)')} ${esc(b.phone)} · ${esc(b.why)}</li>`).join('')}</ul></details>`:''}`;
+  bulkCount();
+}
+function bulkCount(){const r=S.bk,n=r?r.ok.filter(x=>!S.bx.has(x.n)).length:0,b=$('bk-go');b.disabled=!n;b.style.opacity=n?1:.5;b.textContent=n?`Confirm Bulk Upload (${n})`:'Confirm Bulk Upload'}
+function bulkTog(n,on){on?S.bx.delete(n):S.bx.add(n);bulkCount()}
+function bulkAll(on){if(!S.bk)return;S.bx=on?new Set():new Set(S.bk.ok.map(x=>x.n));document.querySelectorAll('.bk-c').forEach(c=>c.checked=on);bulkCount()}
+function openBulk(){
+  if(isAgent())return;
+  const opt=a=>a.map(x=>`<option>${x}</option>`).join('');
+  showModal(`<div class="space-y-4"><div class="flex items-center justify-between"><h3 class="serif text-2xl">Bulk upload leads</h3><button class="text-slate-400 hover:text-white" onclick="hideModal()" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <p class="text-sm text-slate-400">Only <span class="text-slate-200">Name</span> and <span class="text-slate-200">Phone</span> are required. Property type, budget, location, status, agent and notes are optional and get sensible defaults when empty. Header names are detected automatically.</p>
+  <label class="dz block text-center p-5" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');bulkFile(event.dataTransfer.files[0])">
+    <i class="fa-solid fa-file-arrow-up text-2xl text-[#c9a24b]"></i><div class="text-sm mt-2">Drop a CSV, TSV, XLSX or XLS file here, or click to choose one</div>
+    <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" class="hidden" onchange="bulkFile(this.files[0]);this.value=''"></label>
+  <div><label class="lbl" for="bk-txt">Or paste rows from Excel, Google Sheets, CSV or plain lines</label>
+  <textarea id="bk-txt" rows="5" class="in font-mono !text-xs" oninput="bulkPreview(true)" placeholder="Name, Phone, Property Type, Budget, Location, Status, Agent, Notes&#10;Rahul Mehta, 9876543210, Flat, 75L-1.5Cr, Whitefield, New, Agent 2, Wants a video tour&#10;Sneha Rao, 9123456780"></textarea></div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div><label class="lbl">Agent when the row has none</label><select id="bk-ag" class="in" onchange="bulkPreview(false)">${opt(['Unassigned'].concat(AGENTS))}</select></div>
+    <div><label class="lbl">Status when the row has none</label><select id="bk-st" class="in" onchange="bulkPreview(false)">${opt(STATUSES)}</select></div>
+    <label class="flex items-end gap-2 text-sm text-slate-300 pb-2"><input id="bk-dup" type="checkbox" checked onchange="bulkPreview(false)">Skip phone numbers that already exist</label></div>
+  <div id="bk-pv" class="glass p-3 min-h-[3rem]"></div>
+  <div class="flex justify-end gap-2"><button class="ghost" onclick="hideModal()">Cancel</button><button id="bk-go" class="btn" onclick="doBulk()">Confirm Bulk Upload</button></div></div>`);
+  $('mb').className='glass bg-[#10161d] w-full max-w-4xl p-6';
+  bulkPreview(true);
+}
+function bulkFile(f){
+  if(!f)return;
+  if(!$('bk-txt'))return toast('Open Bulk add before choosing a file.');
+  const ext=(f.name.split('.').pop()||'').toLowerCase(),r=new FileReader();
+  if(!['csv','tsv','txt','xlsx','xls'].includes(ext))return toast('Choose a CSV, TSV, XLSX or XLS file.');
+  if(f.size>15*1024*1024)return toast('File is larger than 15 MB. Split it into smaller files and try again.');
+  const put=t=>{$('bk-txt').value=t;bulkPreview(true);toast('Loaded '+f.name)};
+  r.onerror=()=>toast('Couldn’t read that file. Save it as CSV and try again.');
+  if(ext==='xlsx'||ext==='xls'){
+    if(typeof XLSX==='undefined')return toast('Excel support didn’t load. Check your connection or paste the rows instead.');
+    r.onload=()=>{try{const wb=XLSX.read(r.result,{type:'array'}),a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});put(a.map(row=>row.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n'))}catch(e){toast('That Excel file couldn’t be read. Save it as CSV and try again.')}};
+    r.readAsArrayBuffer(f);
+  }else if(['csv','tsv','txt'].includes(ext)){r.onload=()=>put(String(r.result));r.readAsText(f)}
+  else toast('Choose a CSV, XLSX or XLS file.');
+}
+function doBulk(){
+  if(isAgent()||!S.bk)return;
+  const rows=S.bk.ok.filter(x=>!S.bx.has(x.n));if(!rows.length)return;
+  const b=$('bk-go');b.disabled=true;b.textContent='Uploading…';
+  const t0=Date.now(),iso=new Date().toISOString(),role=roleLabel();
+  const ls=rows.map((r,i)=>{
+    const l={id:'L'+(t0+i).toString(36)+Math.random().toString(36).slice(2,5),created:iso,updated:iso,timeline:[],siteVisit:'',followUp:'',poss:'',name:r.name,phone:r.phone,type:r.type,bMin:r.bMin,bMax:r.bMax,location:r.location,status:r.status,agent:r.agent,notes:r.notes};
+    log(l,`Lead imported via Bulk Upload by ${role}`,'system');
+    if(l.agent!=='Unassigned')log(l,`Assigned to ${l.agent}`,'transfer');
+    if(r.notes)log(l,'Import note: '+r.notes,'note');
+    return l;
+  });
+  Promise.resolve().then(()=>DB.saveMany(ls)).then(()=>{
+    hideModal();toast(ls.length+' lead'+(ls.length>1?'s':'')+' imported');
+  }).catch(err=>{
+    toast('Bulk upload failed. No success was reported; check your database rules and try again.');
+    bulkCount();
+  });
+}
+
+/* ---- Notifications ---- */
+function dueList(){
+  const now=new Date(),end=new Date(now.getTime()+864e5);
+  return scoped().filter(l=>l.followUp&&!done(l)&&new Date(l.followUp)<=end).sort((a,b)=>a.followUp.localeCompare(b.followUp));
+}
+function bell(){
+  const d=dueList(),now=new Date();$('bb').textContent=d.length;$('bb').classList.toggle('hidden',!d.length);
+  $('bp').innerHTML=d.length?d.map(l=>`<button class="w-full text-left p-2 rounded-lg hover:bg-white/5" onclick="toggleBell();openLead('${l.id}')"><div class="text-sm font-semibold">${esc(l.name)}</div><div class="text-xs ${new Date(l.followUp)<now?'text-rose-300':'text-amber-300'}">${new Date(l.followUp)<now?'Overdue':'Due'} · ${fdt(l.followUp)}</div></button>`).join(''):'<p class="p-4 text-sm text-slate-400 text-center">You are all caught up. No follow-ups due in the next 24 hours.</p>';
+}
+function toggleBell(){$('bp').classList.toggle('hidden')}
+document.addEventListener('click',e=>{if(!e.target.closest('#bp')&&!e.target.closest('[aria-label=Notifications]'))$('bp').classList.add('hidden')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideModal();if(S.open)closeDrawer()}});
+setInterval(()=>{if(S.user)render()},60000);
+</script>
+</body>
+</html>
+```[cite: 4]

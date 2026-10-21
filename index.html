@@ -85,6 +85,7 @@ button:focus-visible,a:focus-visible{outline:2px solid #c9a24b;outline-offset:2p
         <span id="cnt" class="text-sm text-slate-400"></span>
         <div class="flex-1"></div>
         <button id="bd" onclick="askDelete()" class="hidden px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-sm font-semibold"><i class="fa-solid fa-trash mr-2"></i><span></span></button>
+        <button id="addb" onclick="openBulk()" class="ghost"><i class="fa-solid fa-file-import mr-2"></i>Bulk add</button>
         <button id="add" onclick="openForm()" class="btn"><i class="fa-solid fa-plus mr-2"></i>Add lead</button>
       </div>
     </section>
@@ -120,13 +121,13 @@ const FB_CFG={
 const USEFB=typeof firebase!=='undefined'&&!FB_CFG.apiKey.startsWith('YOUR_');
 const DB=USEFB?(()=>{
   firebase.initializeApp(FB_CFG);const r=firebase.database().ref('leads');
-  return{sub:cb=>r.on('value',s=>cb(Object.values(s.val()||{}))),save:l=>r.child(l.id).set(l),del:ids=>{const u={};ids.forEach(i=>u[i]=null);return r.update(u)}};
+  return{sub:cb=>r.on('value',s=>cb(Object.values(s.val()||{}))),save:l=>r.child(l.id).set(l),del:ids=>{const u={};ids.forEach(i=>u[i]=null);return r.update(u)},saveMany:ls=>{const u={};ls.forEach(l=>u[l.id]=l);return r.update(u)}};
 })():(()=>{
   const K='aspyra_leads_v1';let cb=()=>{};
   const load=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}};
   const put=a=>{try{localStorage.setItem(K,JSON.stringify(a))}catch(e){}cb(a)};
   window.addEventListener('storage',e=>{if(e.key===K)cb(load())});
-  return{sub:f=>{cb=f;f(load())},save:l=>{const a=load().filter(x=>x.id!==l.id);a.push(l);put(a)},del:ids=>put(load().filter(x=>!ids.includes(x.id)))};
+  return{sub:f=>{cb=f;f(load())},save:l=>{const a=load().filter(x=>x.id!==l.id);a.push(l);put(a)},del:ids=>put(load().filter(x=>!ids.includes(x.id))),saveMany:ls=>{const ids=ls.map(l=>l.id);put(load().filter(x=>!ids.includes(x.id)).concat(ls))}};
 })();
 
 /* ================= CONSTANTS & STATE ================= */
@@ -164,7 +165,7 @@ let subscribed=false;
 function boot(){
   $('who').textContent=S.user.name+' · '+({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role];
   $('mode').classList.toggle('hidden',USEFB);
-  $('add').classList.toggle('hidden',isAgent());
+  $('add').classList.toggle('hidden',isAgent());$('addb').classList.toggle('hidden',isAgent());
   $('fa').classList.toggle('hidden',isAgent());
   $('fs').innerHTML='<option value="">All statuses</option>'+STATUSES.map(s=>`<option>${s}</option>`).join('');
   $('fa').innerHTML='<option value="">All agents</option>'+AGENTS.concat('Unassigned').map(s=>`<option>${s}</option>`).join('');
@@ -260,9 +261,12 @@ function card(l){
 }
 
 /* ================= ACTIONS ================= */
+function roleLabel(){return({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role]}
 function transfer(id,to){
-  const l=S.leads.find(x=>x.id===id);if(!l||l.agent===to)return;
-  const from=l.agent;l.agent=to;log(l,`Transferred from ${from} to ${to} by ${S.user.name}`,'transfer');save(l);toast('Lead transferred to '+to);
+  if(isAgent()){render();return}
+  const l=S.leads.find(x=>x.id===id);if(!l||l.agent===to||!['Unassigned'].concat(AGENTS).includes(to))return;
+  const from=l.agent;l.agent=to;log(l,`Transferred to ${to} by ${roleLabel()} (from ${from})`,'transfer');
+  Promise.resolve(save(l)).then(()=>toast('Lead transferred to '+to)).catch(()=>toast('Transfer failed. Check your database rules.'));
 }
 function dropTo(status,e){
   const id=e.dataTransfer.getData('text/plain'),l=S.leads.find(x=>x.id===id);
@@ -321,7 +325,7 @@ function submitForm(id){
   if(done(l))l.followUp='';
   if(isNew){log(l,`Lead created by ${S.user.name}`,'system');if(l.agent!=='Unassigned')log(l,`Assigned to ${l.agent}`,'transfer');if(l.followUp)log(l,`Follow-up set for ${fdt(l.followUp)}`,'note')}
   else{
-    if(old.agent!==l.agent)log(l,`Transferred from ${old.agent} to ${l.agent} by ${S.user.name}`,'transfer');
+    if(old.agent!==l.agent)log(l,`Transferred to ${l.agent} by ${roleLabel()} (from ${old.agent})`,'transfer');
     if(old.status!==l.status)log(l,`Status changed from ${old.status} to ${l.status}`,'status');
     log(l,'Lead details updated','system');
   }
@@ -364,6 +368,70 @@ function addEntry(id){
     if(dt&&!done(l))l.followUp=dt;
   }
   $('fu-note').value='';save(l);toast('Added to timeline');
+}
+
+/* ---- Bulk add leads ---- */
+function splitRow(line,d){const o=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){c+='"';i++}else q=!q}else if(ch===d&&!q){o.push(c.trim());c=''}else c+=ch}o.push(c.trim());return o}
+function parseAmt(s){const m=String(s).replace(/[₹,\s]/g,'').match(/^([\d.]+)(cr|crore|crores|l|lac|lacs|lakh|lakhs)?$/i);return m?{n:parseFloat(m[1]),u:m[2]?(/^c/i.test(m[2])?'c':'l'):''}:null}
+function parseBudget(s){
+  const p=String(s).split(/\s*(?:-|–|—|\bto\b)\s*/i).filter(Boolean).map(parseAmt);
+  if(!p.length||p.length>2||p.some(x=>!x||isNaN(x.n)))return null;
+  const u=p.map(x=>x.u).find(x=>x)||'l',v=p.map(x=>x.n*((x.u||u)==='c'?100:1)),a=v[0],b=v.length>1?v[1]:v[0];
+  return{bMin:Math.min(a,b),bMax:Math.max(a,b)};
+}
+const typeOf=t=>{t=String(t).toLowerCase();return /^(flat|apartment|apt)/.test(t)?'Flat':/^villa/.test(t)?'Villa':/^(plot|land)/.test(t)?'Plot':/^(commercial|shop|office)/.test(t)?'Commercial':null};
+function bulkParse(){
+  const rows=[],errs=[],seen=new Set(S.leads.map(l=>String(l.phone).replace(/\D/g,'').slice(-10))),skip=$('bk-dup').checked;let first=true;
+  $('bk-txt').value.split(/\r?\n/).forEach((raw,i)=>{
+    if(!raw.trim())return;
+    const c=splitRow(raw,raw.includes('\t')?'\t':','),n='Line '+(i+1)+': ';
+    if(first){first=false;if(/^(client|name)/i.test(c[0]))return}
+    const [name,phone,type,bud,loc,ag]=c,ph=String(phone||'').replace(/\D/g,''),t=typeOf(type||''),b=parseBudget(bud||'');
+    if(!name)return errs.push(n+'client name is missing');
+    if(ph.length<10)return errs.push(n+name+' needs a phone number with at least 10 digits');
+    if(!t)return errs.push(n+name+' has an unknown property type. Use Flat, Villa, Plot or Commercial');
+    if(!b)return errs.push(n+name+' has a budget we can’t read. Try 75L-1.5Cr or 75-150');
+    if(!loc)return errs.push(n+name+' needs a location');
+    if(ag&&!AGENTS.concat('Unassigned').includes(ag))return errs.push(n+name+' has an unknown agent. Use Agent 1, Agent 2, Agent 3 or Unassigned');
+    const key=ph.slice(-10);
+    if(skip&&seen.has(key))return errs.push(n+name+' skipped: phone number already exists');
+    seen.add(key);rows.push({name,phone,type:t,bMin:b.bMin,bMax:b.bMax,location:loc,agent:ag||''});
+  });
+  return{rows:rows.slice(0,500),errs,over:rows.length>500};
+}
+function bulkPreview(){
+  const {rows,errs,over}=bulkParse(),b=$('bk-go');
+  $('bk-pv').innerHTML=`<div class="text-sm"><span class="text-emerald-400 font-semibold">${rows.length} ready to add</span>${errs.length?` · <span class="text-rose-300 font-semibold">${errs.length} need attention</span>`:''}${over?' · <span class="text-amber-300">Only the first 500 rows are imported</span>':''}</div>`+
+    (errs.length?`<ul class="mt-2 max-h-28 overflow-auto text-xs text-rose-300 space-y-1">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:'');
+  b.disabled=!rows.length;b.style.opacity=rows.length?1:.5;b.textContent=rows.length?`Add ${rows.length} lead${rows.length>1?'s':''}`:'Add leads';
+}
+function openBulk(){
+  if(isAgent())return;
+  const opt=a=>a.map(x=>`<option>${x}</option>`).join('');
+  showModal(`<div class="space-y-4"><div class="flex items-center justify-between"><h3 class="serif text-2xl">Bulk add leads</h3><button class="text-slate-400 hover:text-white" onclick="hideModal()" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <p class="text-sm text-slate-400">One lead per line: <span class="text-slate-200">Name, Phone, Property Type, Budget, Location</span>, plus an optional Agent. Paste rows from Excel or Google Sheets, or load a CSV file.</p>
+  <textarea id="bk-txt" rows="8" class="in font-mono !text-xs" oninput="bulkPreview()" placeholder="Rahul Mehta, 9876543210, Flat, 75L-1.5Cr, Whitefield&#10;Sneha Rao, 9123456780, Villa, 2-3Cr, Sarjapur Road, Agent 2"></textarea>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div><label class="lbl">Load CSV file</label><input type="file" accept=".csv,.txt,text/csv" class="in !p-1.5" onchange="bulkFile(this)"></div>
+    <div><label class="lbl">Default agent</label><select id="bk-ag" class="in">${opt(['Unassigned'].concat(AGENTS))}</select></div>
+    <div><label class="lbl">Starting status</label><select id="bk-st" class="in">${opt(STATUSES)}</select></div></div>
+  <label class="flex items-center gap-2 text-sm text-slate-300"><input id="bk-dup" type="checkbox" checked onchange="bulkPreview()">Skip phone numbers that already exist</label>
+  <div id="bk-pv" class="glass p-3 min-h-[3rem]"></div>
+  <div class="flex justify-end gap-2"><button class="ghost" onclick="hideModal()">Cancel</button><button id="bk-go" class="btn" onclick="doBulk()">Add leads</button></div></div>`);
+  bulkPreview();
+}
+function bulkFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('bk-txt').value=r.result;bulkPreview()};r.readAsText(f)}
+function doBulk(){
+  if(isAgent())return;const {rows}=bulkParse();if(!rows.length)return;
+  const st=$('bk-st').value,ag=$('bk-ag').value,t0=Date.now(),now=new Date().toISOString();
+  const ls=rows.map((r,i)=>{
+    const l={id:'L'+(t0+i).toString(36)+Math.random().toString(36).slice(2,5),created:now,updated:now,timeline:[],siteVisit:'',followUp:'',poss:POSS[0],name:r.name,phone:r.phone,type:r.type,bMin:r.bMin,bMax:r.bMax,location:r.location,status:st,agent:r.agent||ag};
+    if(done(l))l.followUp='';
+    log(l,`Lead added via bulk import by ${roleLabel()}`,'system');
+    if(l.agent!=='Unassigned')log(l,`Assigned to ${l.agent}`,'transfer');
+    return l;
+  });
+  Promise.resolve(DB.saveMany(ls)).then(()=>{hideModal();toast(ls.length+' lead'+(ls.length>1?'s':'')+' added')}).catch(()=>toast('Bulk add failed. Check your database rules.'));
 }
 
 /* ---- Notifications ---- */

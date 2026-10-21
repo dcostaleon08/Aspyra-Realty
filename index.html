@@ -3,114 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aspyra Realty - Lead Tracker</title>
+    <title>Aspyra Realty - Professional Lead CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-sans text-gray-800">
 
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-900 px-4">
-        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+    <!-- LOGIN CONTAINER -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-slate-900 px-4">
+        <div class="max-w-md w-full bg-white rounded-xl shadow-2xl p-8 border border-gray-100">
             <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-800">Aspyra Realty</h2>
-                <p class="text-gray-500 text-sm mt-1">Lead Tracker & Management System</p>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-3">
+                    <i class="fa-solid fa-building-user text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Aspyra Realty</h2>
+                <p class="text-gray-500 text-sm mt-1">Lead Management Portal</p>
             </div>
-            <div class="space-y-4">
+            <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Role Select Karein</label>
-                    <select id="roleSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Select Role</label>
+                    <select id="roleSelect" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <option value="MasterAdmin">Master Admin</option>
                         <option value="Admin">Admin</option>
                         <option value="Agent">Agent</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" id="usernameInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500" placeholder="Username daalein">
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Username</label>
+                    <input type="text" id="usernameInput" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Username">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="passwordInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-2 focus:ring-blue-500" placeholder="Password daalein">
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Password</label>
+                    <input type="password" id="passwordInput" class="w-full rounded-lg border-gray-300 border p-2.5 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
                 </div>
-                <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full bg-blue-600 text-white p-2.5 rounded-md hover:bg-blue-700 font-semibold shadow transition duration-200">Login</button>
-            </div>
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition duration-150">Login to Dashboard</button>
+            </form>
         </div>
     </div>
 
     <!-- MAIN DASHBOARD -->
     <div id="dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center">
-            <h1 class="text-xl font-bold">Aspyra Realty Tracker</h1>
-            <div class="flex items-center gap-4">
-                <span id="userBadge" class="bg-blue-700 px-3 py-1 rounded text-sm font-semibold"></span>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm font-medium">Logout</button>
+        <!-- Top Navbar -->
+        <header class="bg-slate-900 text-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-building text-blue-400 text-xl"></i>
+                    <span class="font-bold text-lg tracking-wide">Aspyra Realty CRM</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="userBadge" class="bg-blue-600/30 border border-blue-400/30 text-blue-300 text-xs px-3 py-1 rounded-full font-semibold"></span>
+                    <button onclick="logout()" class="text-gray-300 hover:text-white text-sm font-medium transition"><i class="fa-solid fa-right-from-bracket mr-1"></i> Logout</button>
+                </div>
             </div>
         </header>
 
-        <main class="p-6 flex-1 max-w-7xl w-full mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Leads Overview</h2>
-                <div class="flex gap-2">
-                    <button id="bulkDeleteBtn" onclick="deleteSelectedLeads()" class="hidden bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 text-sm font-semibold">
-                        <i class="fa-solid fa-trash mr-1"></i> Bulk Delete Selected
+        <!-- Main Content -->
+        <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 flex-1">
+            <!-- Controls Bar -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Lead Tracker & Pipeline</h1>
+                    <p class="text-gray-500 text-sm">Manage requirements, assigned agents, and follow-ups</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button id="bulkDeleteBtn" onclick="deleteSelectedLeads()" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">
+                        <i class="fa-solid fa-trash mr-1"></i> Delete Selected
                     </button>
-                    <button onclick="openAddLeadModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-semibold">
-                        + Add New Lead
+                    <button onclick="openAddLeadModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add New Lead
                     </button>
                 </div>
             </div>
 
-            <!-- LEADS TABLE -->
-            <div class="bg-white shadow rounded-lg overflow-x-auto">
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-3 items-center">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" id="searchInput" onkeyup="filterLeads()" placeholder="Search Name, Phone, Property..." class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <select id="statusFilter" onchange="filterLeads()" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="ALL">All Statuses</option>
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Site Visit Scheduled">Site Visit Scheduled</option>
+                    <option value="Negotiation">Negotiation</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Lost">Lost</option>
+                </select>
+                <select id="agentFilter" onchange="filterLeads()" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="ALL">All Agents</option>
+                    <option value="Agent 1">Agent 1</option>
+                    <option value="Agent 2">Agent 2</option>
+                    <option value="Agent 3">Agent 3</option>
+                    <option value="Unassigned">Unassigned</option>
+                </select>
+            </div>
+
+            <!-- Lead Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th id="selectAllTh" class="p-4 hidden"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
-                            <th class="p-4 font-semibold text-gray-600">Client Name</th>
-                            <th class="p-4 font-semibold text-gray-600">Phone</th>
-                            <th class="p-4 font-semibold text-gray-600">Assigned Agent</th>
-                            <th class="p-4 font-semibold text-gray-600">Status</th>
-                            <th class="p-4 font-semibold text-gray-600">Actions</th>
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase text-gray-500 tracking-wider">
+                            <th id="selectAllTh" class="p-4 hidden w-10"><input type="checkbox" onclick="toggleSelectAll(this)" class="rounded"></th>
+                            <th class="p-4">Client Details</th>
+                            <th class="p-4">Requirement / Budget</th>
+                            <th class="p-4">Assigned Agent</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Next Follow-up</th>
+                            <th class="p-4 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="leadTableBody">
-                        <!-- Dynamic Leads Render Here -->
+                    <tbody id="leadTableBody" class="divide-y divide-gray-200 text-sm">
+                        <!-- Leads dynamically rendered -->
                     </tbody>
                 </table>
             </div>
         </main>
     </div>
 
-    <!-- ADD LEAD MODAL -->
-    <div id="addLeadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <h3 class="text-lg font-bold mb-4">Add New Lead</h3>
-            <div class="space-y-3">
-                <input type="text" id="leadName" placeholder="Lead Name" class="w-full p-2 border rounded">
-                <input type="text" id="leadPhone" placeholder="Phone Number" class="w-full p-2 border rounded">
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Assign To Agent</label>
-                    <select id="assignAgentSelect" class="w-full p-2 border rounded">
-                        <option value="Agent 1">Agent 1</option>
-                        <option value="Agent 2">Agent 2</option>
-                        <option value="Agent 3">Agent 3</option>
-                        <option value="Unassigned">Unassigned</option>
-                    </select>
+    <!-- ADD / EDIT LEAD MODAL -->
+    <div id="leadModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 relative">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4">Add New Real Estate Lead</h3>
+            <form onsubmit="event.preventDefault(); saveLead();" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Client Name *</label>
+                        <input type="text" id="mName" required class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Phone Number *</label>
+                        <input type="tel" id="mPhone" required class="w-full border rounded-lg p-2 text-sm">
+                    </div>
                 </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Property Type</label>
+                        <select id="mPropertyType" class="w-full border rounded-lg p-2 text-sm">
+                            <option value="Apartment/Flat">Apartment/Flat</option>
+                            <option value="Villa/House">Villa/House</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Plot/Land">Plot/Land</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Budget</label>
+                        <input type="text" id="mBudget" placeholder="e.g. ₹75 Lakhs - ₹1 Cr" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Preferred Location</label>
+                        <input type="text" id="mLocation" placeholder="e.g. Whitefield, Indiranagar" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Assign Agent</label>
+                        <select id="mAssignAgent" class="w-full border rounded-lg p-2 text-sm">
+                            <option value="Agent 1">Agent 1</option>
+                            <option value="Agent 2">Agent 2</option>
+                            <option value="Agent 3">Agent 3</option>
+                            <option value="Unassigned">Unassigned</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Lead Status</label>
+                        <select id="mStatus" class="w-full border rounded-lg p-2 text-sm">
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Site Visit Scheduled">Site Visit Scheduled</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Closed">Closed</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Next Follow-up Date</label>
+                        <input type="date" id="mFollowupDate" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Notes / Requirement Summary</label>
+                    <textarea id="mNotes" rows="2" class="w-full border rounded-lg p-2 text-sm" placeholder="Add specific client requirements..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeLeadModal()" class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TIMELINE / DETAILS MODAL -->
+    <div id="timelineModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 id="tLeadName" class="text-lg font-bold text-gray-900">Lead Details & Timeline</h3>
+                <button onclick="closeTimelineModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="mt-6 flex justify-end gap-2">
-                <button onclick="closeAddLeadModal()" class="px-4 py-2 border rounded text-gray-600">Cancel</button>
-                <button onclick="saveLead()" class="px-4 py-2 bg-blue-600 text-white rounded">Save Lead</button>
+            
+            <div id="tDetails" class="bg-gray-50 p-3 rounded-lg text-xs space-y-1 mb-4 border"></div>
+
+            <div class="flex-1 overflow-y-auto mb-4">
+                <h4 class="text-xs font-bold uppercase text-gray-500 mb-2">Activity Log & Follow-up Notes</h4>
+                <div id="timelineLog" class="space-y-3"></div>
+            </div>
+
+            <div class="border-t pt-3 space-y-2">
+                <input type="text" id="newTimelineNote" placeholder="Add follow-up remark..." class="w-full border rounded-lg p-2 text-sm">
+                <div class="flex justify-between items-center">
+                    <input type="date" id="newTimelineDate" class="border rounded-lg p-1.5 text-xs">
+                    <button onclick="addTimelineNote()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Add Activity</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let currentUserRole = '';
+        let activeLeadId = null;
         let leads = [
-            { id: 1, name: "Rahul Sharma", phone: "9876543210", agent: "Agent 1", status: "New" },
-            { id: 2, name: "Priya Patel", phone: "9123456789", agent: "Agent 2", status: "In Progress" }
+            {
+                id: 101,
+                name: "Rahul Sharma",
+                phone: "9876543210",
+                type: "Apartment/Flat",
+                budget: "₹80 Lakhs",
+                location: "Indiranagar",
+                agent: "Agent 1",
+                status: "Contacted",
+                followup: "2026-10-25",
+                notes: "Looking for 3BHK ready to move.",
+                timeline: [
+                    { date: "2026-10-21", note: "Initial call done. Requirements noted." }
+                ]
+            },
+            {
+                id: 102,
+                name: "Priya Patel",
+                phone: "9123456789",
+                type: "Villa/House",
+                budget: "₹2.5 Cr",
+                location: "Whitefield",
+                agent: "Agent 2",
+                status: "Site Visit Scheduled",
+                followup: "2026-10-23",
+                notes: "Interested in Gated Community Villas.",
+                timeline: [
+                    { date: "2026-10-20", note: "Site visit fixed for Saturday 11 AM." }
+                ]
+            }
         ];
 
         function handleLogin() {
@@ -119,7 +264,7 @@
             const password = document.getElementById('passwordInput').value;
 
             if(!username || !password) {
-                alert('Username aur Password fill karein!');
+                alert('Please enter username and password!');
                 return;
             }
 
@@ -143,50 +288,160 @@
             }
         }
 
-        function renderLeads() {
+        function renderLeads(filteredLeads = null) {
+            const list = filteredLeads || leads;
             const tbody = document.getElementById('leadTableBody');
             tbody.innerHTML = '';
 
-            leads.forEach(lead => {
+            if(list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">No leads found.</td></tr>`;
+                return;
+            }
+
+            list.forEach(lead => {
                 const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
+                tr.className = "hover:bg-gray-50/80 transition";
 
                 let checkTd = currentUserRole === 'MasterAdmin' 
-                    ? `<td class="p-4"><input type="checkbox" class="lead-checkbox" value="${lead.id}"></td>` 
+                    ? `<td class="p-4"><input type="checkbox" class="lead-checkbox rounded" value="${lead.id}"></td>` 
                     : '';
 
                 tr.innerHTML = `
                     ${checkTd}
-                    <td class="p-4 font-medium text-gray-800">${lead.name}</td>
-                    <td class="p-4 text-gray-600">${lead.phone}</td>
-                    <td class="p-4 text-blue-600 font-semibold">${lead.agent}</td>
-                    <td class="p-4"><span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">${lead.status}</span></td>
                     <td class="p-4">
-                        <a href="https://wa.me/91${lead.phone}" target="_blank" class="text-green-600 hover:text-green-800 mr-2"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+                        <div class="font-bold text-gray-900">${lead.name}</div>
+                        <div class="text-xs text-gray-500"><i class="fa-solid fa-phone text-blue-500 mr-1"></i>${lead.phone}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-medium text-gray-800">${lead.type}</div>
+                        <div class="text-xs text-gray-500">${lead.budget} • ${lead.location}</div>
+                    </td>
+                    <td class="p-4">
+                        <select onchange="transferAgent(${lead.id}, this.value)" class="text-xs font-semibold border rounded-lg p-1.5 bg-gray-50 focus:ring-1 focus:ring-blue-500">
+                            <option value="Agent 1" ${lead.agent === 'Agent 1' ? 'selected' : ''}>Agent 1</option>
+                            <option value="Agent 2" ${lead.agent === 'Agent 2' ? 'selected' : ''}>Agent 2</option>
+                            <option value="Agent 3" ${lead.agent === 'Agent 3' ? 'selected' : ''}>Agent 3</option>
+                            <option value="Unassigned" ${lead.agent === 'Unassigned' ? 'selected' : ''}>Unassigned</option>
+                        </select>
+                    </td>
+                    <td class="p-4">
+                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">${lead.status}</span>
+                    </td>
+                    <td class="p-4 text-xs font-medium text-gray-600">
+                        ${lead.followup ? `<i class="fa-regular fa-calendar mr-1 text-gray-400"></i>${lead.followup}` : 'N/A'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex justify-center items-center gap-2">
+                            <a href="https://wa.me/91${lead.phone}" target="_blank" class="w-8 h-8 rounded-full bg-green-100 hover:bg-green-200 text-green-700 flex items-center justify-center transition" title="WhatsApp Chat">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                            </a>
+                            <button onclick="openTimeline(${lead.id})" class="w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center justify-center transition" title="Timeline & Followups">
+                                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function openAddLeadModal() { document.getElementById('addLeadModal').classList.remove('hidden'); }
-        function closeAddLeadModal() { document.getElementById('addLeadModal').classList.add('hidden'); }
+        function filterLeads() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const agent = document.getElementById('agentFilter').value;
+
+            const filtered = leads.filter(l => {
+                const matchSearch = l.name.toLowerCase().includes(search) || l.phone.includes(search) || l.type.toLowerCase().includes(search);
+                const matchStatus = status === 'ALL' || l.status === status;
+                const matchAgent = agent === 'ALL' || l.agent === agent;
+                return matchSearch && matchStatus && matchAgent;
+            });
+
+            renderLeads(filtered);
+        }
+
+        function transferAgent(id, newAgent) {
+            const lead = leads.find(l => l.id === id);
+            if(lead) {
+                lead.agent = newAgent;
+                lead.timeline.push({ date: new Date().toISOString().split('T')[0], note: `Assigned to ${newAgent}` });
+                alert(`Lead transferred to ${newAgent}`);
+            }
+        }
+
+        function openAddLeadModal() {
+            document.getElementById('leadModal').classList.remove('hidden');
+        }
+
+        function closeLeadModal() {
+            document.getElementById('leadModal').classList.add('hidden');
+        }
 
         function saveLead() {
-            const name = document.getElementById('leadName').value;
-            const phone = document.getElementById('leadPhone').value;
-            const agent = document.getElementById('assignAgentSelect').value;
+            const newLead = {
+                id: Date.now(),
+                name: document.getElementById('mName').value,
+                phone: document.getElementById('mPhone').value,
+                type: document.getElementById('mPropertyType').value,
+                budget: document.getElementById('mBudget').value || 'N/A',
+                location: document.getElementById('mLocation').value || 'N/A',
+                agent: document.getElementById('mAssignAgent').value,
+                status: document.getElementById('mStatus').value,
+                followup: document.getElementById('mFollowupDate').value,
+                notes: document.getElementById('mNotes').value,
+                timeline: [
+                    { date: new Date().toISOString().split('T')[0], note: "Lead created in system." }
+                ]
+            };
 
-            if(!name || !phone) {
-                alert('Name aur Phone enter karein!');
-                return;
-            }
-
-            leads.push({ id: Date.now(), name, phone, agent, status: "New" });
+            leads.unshift(newLead);
             renderLeads();
-            closeAddLeadModal();
-            document.getElementById('leadName').value = '';
-            document.getElementById('leadPhone').value = '';
+            closeLeadModal();
+        }
+
+        function openTimeline(id) {
+            activeLeadId = id;
+            const lead = leads.find(l => l.id === id);
+            if(!lead) return;
+
+            document.getElementById('tLeadName').innerText = `${lead.name} (${lead.phone})`;
+            document.getElementById('tDetails').innerHTML = `
+                <div><strong>Property:</strong> ${lead.type} | <strong>Budget:</strong> ${lead.budget}</div>
+                <div><strong>Location:</strong> ${lead.location} | <strong>Notes:</strong> ${lead.notes || 'None'}</div>
+            `;
+
+            renderTimelineLogs(lead);
+            document.getElementById('timelineModal').classList.remove('hidden');
+        }
+
+        function renderTimelineLogs(lead) {
+            const container = document.getElementById('timelineLog');
+            container.innerHTML = '';
+            lead.timeline.forEach(t => {
+                container.innerHTML += `
+                    <div class="border-l-2 border-blue-500 pl-3 py-1">
+                        <div class="text-[10px] font-bold text-gray-400">${t.date}</div>
+                        <div class="text-xs text-gray-700">${t.note}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function addTimelineNote() {
+            const note = document.getElementById('newTimelineNote').value;
+            const date = document.getElementById('newTimelineDate').value || new Date().toISOString().split('T')[0];
+            if(!note) return;
+
+            const lead = leads.find(l => l.id === activeLeadId);
+            if(lead) {
+                lead.timeline.push({ date, note });
+                renderTimelineLogs(lead);
+                document.getElementById('newTimelineNote').value = '';
+            }
+        }
+
+        function closeTimelineModal() {
+            document.getElementById('timelineModal').classList.add('hidden');
         }
 
         function toggleSelectAll(master) {
@@ -196,10 +451,10 @@
         function deleteSelectedLeads() {
             const selected = Array.from(document.querySelectorAll('.lead-checkbox:checked')).map(cb => Number(cb.value));
             if(selected.length === 0) {
-                alert('Kam se kam 1 lead select karein!');
+                alert('Please select at least 1 lead to delete.');
                 return;
             }
-            if(confirm('Kya aap selected leads delete karna chahte hain?')) {
+            if(confirm('Are you sure you want to delete selected leads?')) {
                 leads = leads.filter(l => !selected.includes(l.id));
                 renderLeads();
             }

@@ -102,7 +102,7 @@ button:focus-visible,a:focus-visible{outline:2px solid #c9a24b;outline-offset:2p
 
 <!-- MODAL -->
 <div id="modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-start sm:items-center justify-center p-4 overflow-y-auto"><div id="mb" class="glass bg-[#10161d] w-full max-w-xl p-6"></div></div>
-<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden bg-[#1c2530] border border-white/10 rounded-xl px-4 py-3 text-sm shadow-2xl"></div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden max-w-[calc(100vw-2rem)] bg-[#1c2530] border border-white/10 rounded-xl px-4 py-3 text-sm shadow-2xl"></div>
 
 <script>
 /* ================= FIREBASE CONFIG TEMPLATE =================
@@ -110,13 +110,13 @@ button:focus-visible,a:focus-visible{outline:2px solid #c9a24b;outline-offset:2p
    Local mode (data saved in this browser only).
    Realtime Database data lives at /leads                          */
 const FB_CFG={
-  apiKey: "AIzaSyBxhBpfQTyGkKahUTq42LOHqvAVq60kN2k",
-  authDomain: "sales-tracker-f6ed0.firebaseapp.com",
-  databaseURL: "https://sales-tracker-f6ed0-default-rtdb.firebaseio.com",
-  projectId: "sales-tracker-f6ed0",
-  storageBucket: "sales-tracker-f6ed0.firebasestorage.app",
-  messagingSenderId: "1027766079545",
-  appId: "1:1027766079545:web:2122e7ca1ae03beb857de8"
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId:"YOUR_PROJECT",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"000000000000",
+  appId:"YOUR_APP_ID"
 };
 
 /* ================= DATA LAYER ================= */
@@ -158,7 +158,18 @@ const phoneDigits=p=>{let d=String(p).replace(/\D/g,'');return d.length===10?'91
 const done=l=>l.status==='Closed'||l.status==='Lost';
 const tl=l=>l.timeline||[];
 
-function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hidden'),2600)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hidden'),3200)}
+/* Uses the in-app toast every time. Native notifications are sent only when the
+   user has already granted permission; this never triggers a permission prompt. */
+function notify(title,message){
+  toast(message);
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const n=new Notification(title,{body:message,tag:'aspyra-'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),renotify:false});
+      n.onclick=()=>{try{window.focus()}catch(e){};n.close()};
+    }
+  }catch(e){/* Browser or platform may block native notifications; toast remains available. */}
+}
 function log(l,text,kind){(l.timeline=tl(l)).push({t:new Date().toISOString(),by:S.user.name,text,kind:kind||'note'})}
 function save(l){l.updated=new Date().toISOString();return DB.save(l)}
 
@@ -173,9 +184,11 @@ function logout(){S.user=null;S.sel.clear();closeDrawer();$('app').classList.add
 
 let subscribed=false;
 function boot(){
-  $('who').textContent=S.user.name+' · '+({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role];$('mode').classList.toggle('hidden',USEFB);
+  $('who').textContent=S.user.name+' · '+({master:'Master Admin',admin:'Admin',agent:'Agent'})[S.user.role];
+  $('mode').classList.toggle('hidden',USEFB);
   $('add').classList.toggle('hidden',isAgent());$('addb').classList.toggle('hidden',isAgent());
-  $('fa').classList.toggle('hidden',isAgent());$('fs').innerHTML='<option value="">All statuses</option>'+STATUSES.map(s=>`<option>${s}</option>`).join('');
+  $('fa').classList.toggle('hidden',isAgent());
+  $('fs').innerHTML='<option value="">All statuses</option>'+STATUSES.map(s=>`<option>${s}</option>`).join('');
   $('fa').innerHTML='<option value="">All agents</option>'+AGENTS.concat('Unassigned').map(s=>`<option>${s}</option>`).join('');
   S.f={q:'',status:'',agent:'',fu:'',from:'',to:''};$('fq').value='';$('fs').value='';$('fa').value='';$('ff').value='';
   setView(S.view);
@@ -279,7 +292,7 @@ async function transfer(id,to){
   log(l,`Transferred from ${from||'Unassigned'} to ${to} by ${roleLabel()}`,'transfer');
   try{
     await Promise.resolve(save(l));
-    toast('Lead transferred to '+to);
+    notify('Lead assignment updated',`“${l.name}” assigned to ${to}`);
   }catch(err){
     l.agent=from;l.timeline=oldTimeline;l.updated=oldUpdated;
     render();
@@ -350,7 +363,13 @@ function submitForm(id){
     if(old.status!==l.status)log(l,`Status changed from ${old.status} to ${l.status}`,'status');
     log(l,'Lead details updated','system');
   }
-  save(l);hideModal();toast(isNew?'Lead added':'Changes saved');
+  save(l);hideModal();
+  if(isNew){
+    const detail=l.agent&&l.agent!=='Unassigned'?`Lead added: ${l.name} · assigned to ${l.agent}`:`Lead added: ${l.name}`;
+    notify('New lead added',detail);
+  }else if(old.agent!==l.agent){
+    notify('Lead assignment updated',`${l.name}: ${old.agent||'Unassigned'} → ${l.agent||'Unassigned'}`);
+  }else toast('Changes saved');
 }
 
 /* ---- Drawer / timeline ---- */
@@ -374,7 +393,7 @@ function drawer(){
     <textarea id="fu-note" rows="2" class="in" placeholder="What happened or what comes next?" required>${esc(keep)}</textarea>
     <button class="btn w-full">Add to timeline</button></form>
   <div><div class="font-semibold text-sm mb-3">Activity timeline</div><div class="relative pl-6 space-y-4 before:absolute before:left-[9px] before:top-1 before:bottom-1 before:w-px before:bg-white/10">
-  ${tl(l).slice().reverse().map(e=>{const [ic,c]=ICON[e.kind]||ICON.note;return `<div class="relative"><span class="absolute -left-6 top-0.5 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[10px]" style="background:${c}33;color:${c}"><i class="fa-solid ${ic}"></i></span><div class="text-sm">${esc(e.text)}</div><div class="text-xs text-slate-500 mt-0.5">${fdt(e.t)} ·${esc(e.by)}</div></div>`}).join('')}</div></div></div>`;
+  ${tl(l).slice().reverse().map(e=>{const [ic,c]=ICON[e.kind]||ICON.note;return `<div class="relative"><span class="absolute -left-6 top-0.5 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[10px]" style="background:${c}33;color:${c}"><i class="fa-solid ${ic}"></i></span><div class="text-sm">${esc(e.text)}</div><div class="text-xs text-slate-500 mt-0.5">${fdt(e.t)} · ${esc(e.by)}</div></div>`}).join('')}</div></div></div>`;
   $('fu-form').onsubmit=ev=>{ev.preventDefault();addEntry(l.id)};
 }
 function addEntry(id){
@@ -533,7 +552,7 @@ function bulkFile(f){
   r.onerror=()=>toast('Couldn’t read that file. Save it as CSV and try again.');
   if(ext==='xlsx'||ext==='xls'){
     if(typeof XLSX==='undefined')return toast('Excel support didn’t load. Check your connection or paste the rows instead.');
-    r.onload=()=>{try{const wb=XLSX.read(r.result,{type:'array'}),a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});put(a.map(row=>row.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n'))}catch(e){toast('That Excel file couldn’t be read. Save it as CSV and try again.')}};
+    r.onload=()=>{try{const wb=XLSX.read(r.result,{type:'array'}),a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});put(a.map(row=>row.map(c=>String(c).replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n'))}catch(e){toast('That Excel file couldn’t be read. Save it as CSV and try again.')}};
     r.readAsArrayBuffer(f);
   }else if(['csv','tsv','txt'].includes(ext)){r.onload=()=>put(String(r.result));r.readAsText(f)}
   else toast('Choose a CSV, XLSX or XLS file.');
@@ -551,9 +570,13 @@ function doBulk(){
     return l;
   });
   Promise.resolve().then(()=>DB.saveMany(ls)).then(()=>{
-    hideModal();toast(ls.length+' lead'+(ls.length>1?'s':'')+' imported');
+    hideModal();
+    /* One notification for the entire batch; never notify from inside the row loop. */
+    const message=`Bulk Upload Complete: ${ls.length} lead${ls.length===1?'':'s'} imported successfully`;
+    notify('Bulk Upload Complete',message);
   }).catch(err=>{
     toast('Bulk upload failed. No success was reported; check your database rules and try again.');
+    if(b){b.disabled=false;b.textContent='Confirm Bulk Upload'}
     bulkCount();
   });
 }
@@ -565,7 +588,18 @@ function dueList(){
 }
 function bell(){
   const d=dueList(),now=new Date();$('bb').textContent=d.length;$('bb').classList.toggle('hidden',!d.length);
-  $('bp').innerHTML=d.length?d.map(l=>`<button class="w-full text-left p-2 rounded-lg hover:bg-white/5" onclick="toggleBell();openLead('${l.id}')"><div class="text-sm font-semibold">${esc(l.name)}</div><div class="text-xs ${new Date(l.followUp)<now?'text-rose-300':'text-amber-300'}">${new Date(l.followUp)<now?'Overdue':'Due'} · ${fdt(l.followUp)}</div></button>`).join(''):'<p class="p-4 text-sm text-slate-400 text-center">You are all caught up. No follow-ups due in the next 24 hours.</p>';
+  const enable=typeof Notification!=='undefined'&&Notification.permission!=='granted'?
+    '<div class="p-2 border-b border-white/10"><button class="w-full text-left text-xs text-[#e8c76d] hover:text-white p-2 rounded-lg hover:bg-white/5" onclick="enableWebNotifications()"><i class="fa-solid fa-bell mr-2"></i>Enable desktop notifications</button><p class="px-2 pb-1 text-[11px] text-slate-500">Optional. The browser will ask only after you click.</p></div>':'';
+  $('bp').innerHTML=enable+(d.length?d.map(l=>`<button class="w-full text-left p-2 rounded-lg hover:bg-white/5" onclick="toggleBell();openLead('${l.id}')"><div class="text-sm font-semibold">${esc(l.name)}</div><div class="text-xs ${new Date(l.followUp)<now?'text-rose-300':'text-amber-300'}">${new Date(l.followUp)<now?'Overdue':'Due'} · ${fdt(l.followUp)}</div></button>`).join(''):'<p class="p-4 text-sm text-slate-400 text-center">You are all caught up. No follow-ups due in the next 24 hours.</p>');
+}
+function enableWebNotifications(){
+  if(!('Notification' in window)){toast('This browser does not support desktop notifications.');return}
+  if(!window.isSecureContext){toast('Desktop notifications require HTTPS or localhost.');return}
+  if(Notification.permission==='granted'){toast('Desktop notifications are already enabled.');return}
+  if(Notification.permission==='denied'){toast('Notifications are blocked by your browser. Enable them in site settings.');return}
+  Notification.requestPermission().then(permission=>{
+    toast(permission==='granted'?'Desktop notifications enabled.':'Desktop notifications were not enabled.');
+  }).catch(()=>toast('Could not request notification permission. Check browser site settings.'));
 }
 function toggleBell(){$('bp').classList.toggle('hidden')}
 document.addEventListener('click',e=>{if(!e.target.closest('#bp')&&!e.target.closest('[aria-label=Notifications]'))$('bp').classList.add('hidden')});
@@ -574,4 +608,3 @@ setInterval(()=>{if(S.user)render()},60000);
 </script>
 </body>
 </html>
-```[cite: 4]
